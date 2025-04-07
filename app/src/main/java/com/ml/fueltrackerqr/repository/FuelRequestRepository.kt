@@ -55,7 +55,22 @@ class FuelRequestRepository {
         notes: String = ""
     ): Result<FuelRequest> {
         return try {
+            // Validate inputs
+            if (driverId.isBlank()) {
+                return Result.failure(IllegalArgumentException("Driver ID cannot be empty"))
+            }
+            if (vehicleId.isBlank()) {
+                return Result.failure(IllegalArgumentException("Vehicle ID cannot be empty"))
+            }
+            if (requestedAmount <= 0) {
+                return Result.failure(IllegalArgumentException("Requested amount must be greater than zero"))
+            }
+
+            // Generate a unique ID for the request
             val requestId = UUID.randomUUID().toString()
+            Log.d(TAG, "Creating new fuel request with ID: $requestId")
+
+            // Create the request object
             val request = FuelRequest(
                 id = requestId,
                 driverId = driverId,
@@ -68,9 +83,14 @@ class FuelRequestRepository {
                 notes = notes
             )
 
+            // Save to Firestore
+            Log.d(TAG, "Saving fuel request to Firestore: $requestId")
             requestsCollection.document(requestId).set(request).await()
+            Log.d(TAG, "Successfully saved fuel request: $requestId")
+
             Result.success(request)
         } catch (e: Exception) {
+            Log.e(TAG, "Error creating fuel request", e)
             Result.failure(e)
         }
     }
@@ -83,17 +103,31 @@ class FuelRequestRepository {
      */
     fun getRequestsByDriver(driverId: String): Flow<List<FuelRequest>> = flow {
         try {
+            Log.d(TAG, "Fetching fuel requests for driver: $driverId")
+
+            // Validate driver ID
+            if (driverId.isBlank()) {
+                Log.e(TAG, "Driver ID is blank, cannot fetch requests")
+                emit(emptyList())
+                return@flow
+            }
+
+            // Query Firestore for requests
             val snapshot = requestsCollection
                 .whereEqualTo(FirebaseConfig.FIELD_REQUEST_DRIVER_ID, driverId)
                 .orderBy(FirebaseConfig.FIELD_REQUEST_DATE, Query.Direction.DESCENDING)
                 .get()
                 .await()
 
+            // Process the results
             val requests = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(FuelRequest::class.java)
             }
+
+            Log.d(TAG, "Found ${requests.size} requests for driver: $driverId")
             emit(requests)
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching requests for driver: $driverId", e)
             emit(emptyList())
         }
     }

@@ -35,7 +35,7 @@ class FuelTrackerApp : Application() {
     private fun initializeFirebase(retryCount: Int = 0) {
         if (retryCount > 3) {
             Log.e(TAG, "Failed to initialize Firebase after multiple attempts")
-            showToast("Failed to initialize app. Please restart.")
+            showToast("Failed to initialize app. Data will be saved locally.")
             return
         }
 
@@ -57,6 +57,11 @@ class FuelTrackerApp : Application() {
             // Initialize FirebaseConfig after Firebase is initialized
             FirebaseConfig.initialize()
             Log.d(TAG, "FirebaseConfig initialized successfully")
+
+            // Show success message
+            if (isFirebaseInitialized) {
+                showToast("Connected to cloud database")
+            }
 
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Firebase", e)

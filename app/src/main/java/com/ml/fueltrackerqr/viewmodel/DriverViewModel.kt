@@ -87,25 +87,34 @@ class DriverViewModel : ViewModel() {
             Log.d(TAG, "Loading driver requests for driver ID: $driverId")
 
             try {
-                // Check if this is the test user
-                if (driverId == "test-user-id") {
-                    Log.d(TAG, "Using demo requests for test user")
-                    _driverRequests.value = demoRequests
-                    return@launch
-                }
-
-                // Otherwise, try to load from repository
+                // Always try to load from Firebase first
                 fuelRequestRepository.getRequestsByDriver(driverId)
                     .collectLatest { requests ->
                         Log.d(TAG, "Loaded ${requests.size} requests from repository")
-                        _driverRequests.value = requests
+                        if (requests.isNotEmpty()) {
+                            _driverRequests.value = requests
+                        } else if (driverId == "test-user-id") {
+                            // If no requests found and this is a test user, use demo data
+                            Log.d(TAG, "No requests found for test user, using demo data")
+                            _driverRequests.value = demoRequests
+                        } else {
+                            // For real users with no requests, show empty list
+                            _driverRequests.value = emptyList()
+                        }
                     }
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading driver requests", e)
-                // If Firebase is not initialized, use demo data
+                // If Firebase is not initialized, use demo data for test user
                 if (e is FirebaseNotInitializedException) {
-                    Log.d(TAG, "Firebase not initialized, using demo requests")
-                    _driverRequests.value = demoRequests
+                    Log.d(TAG, "Firebase not initialized, using fallback data")
+                    if (driverId == "test-user-id") {
+                        _driverRequests.value = demoRequests
+                    } else {
+                        // For real users, show current cached data or empty list
+                        if (_driverRequests.value.isEmpty()) {
+                            _driverRequests.value = emptyList()
+                        }
+                    }
                 }
             }
         }
@@ -121,25 +130,34 @@ class DriverViewModel : ViewModel() {
             Log.d(TAG, "Loading vehicles for driver ID: $driverId")
 
             try {
-                // Check if this is the test user
-                if (driverId == "test-user-id") {
-                    Log.d(TAG, "Using demo vehicles for test user")
-                    _driverVehicles.value = demoVehicles
-                    return@launch
-                }
-
-                // Otherwise, try to load from repository
+                // Always try to load from Firebase first
                 vehicleRepository.getVehiclesByDriver(driverId)
                     .collectLatest { vehicles ->
                         Log.d(TAG, "Loaded ${vehicles.size} vehicles from repository")
-                        _driverVehicles.value = vehicles
+                        if (vehicles.isNotEmpty()) {
+                            _driverVehicles.value = vehicles
+                        } else if (driverId == "test-user-id") {
+                            // If no vehicles found and this is a test user, use demo data
+                            Log.d(TAG, "No vehicles found for test user, using demo data")
+                            _driverVehicles.value = demoVehicles
+                        } else {
+                            // For real users with no vehicles, show empty list
+                            _driverVehicles.value = emptyList()
+                        }
                     }
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading driver vehicles", e)
-                // If Firebase is not initialized, use demo data
+                // If Firebase is not initialized, use demo data for test user
                 if (e is FirebaseNotInitializedException) {
-                    Log.d(TAG, "Firebase not initialized, using demo vehicles")
-                    _driverVehicles.value = demoVehicles
+                    Log.d(TAG, "Firebase not initialized, using fallback data")
+                    if (driverId == "test-user-id") {
+                        _driverVehicles.value = demoVehicles
+                    } else {
+                        // For real users, show current cached data or empty list
+                        if (_driverVehicles.value.isEmpty()) {
+                            _driverVehicles.value = emptyList()
+                        }
+                    }
                 }
             }
         }
@@ -166,10 +184,10 @@ class DriverViewModel : ViewModel() {
             _requestState.value = RequestState.Loading
 
             try {
-                // For test user or demo mode, create a demo request
-                if (driver.id == "test-user-id" || !com.ml.fueltrackerqr.FuelTrackerApp.isFirebaseInitialized) {
-                    Log.d(TAG, "Creating demo fuel request")
-                    // Create a new demo request
+                // Check if Firebase is initialized
+                if (!com.ml.fueltrackerqr.FuelTrackerApp.isFirebaseInitialized) {
+                    Log.d(TAG, "Firebase not initialized, attempting to save locally")
+                    // Create a new request locally
                     val newRequest = FuelRequest(
                         id = UUID.randomUUID().toString(),
                         driverId = driver.id,
@@ -187,11 +205,11 @@ class DriverViewModel : ViewModel() {
                     currentList.add(0, newRequest) // Add at the beginning
                     _driverRequests.value = currentList
 
-                    _requestState.value = RequestState.Success("Fuel request submitted successfully (Demo)")
+                    _requestState.value = RequestState.Success("Fuel request saved locally. It will be synced when connection is restored.")
                     return@launch
                 }
 
-                // Otherwise use the repository
+                // Use the repository to save to Firebase
                 fuelRequestRepository.createFuelRequest(
                     driverId = driver.id,
                     driverName = driver.name,
@@ -200,14 +218,36 @@ class DriverViewModel : ViewModel() {
                     tripDetails = tripDetails,
                     notes = notes
                 )
-                    .onSuccess {
-                        Log.d(TAG, "Fuel request created successfully")
+                    .onSuccess { request ->
+                        Log.d(TAG, "Fuel request created successfully with ID: ${request.id}")
                         _requestState.value = RequestState.Success("Fuel request submitted successfully")
+
+                        // Refresh the driver requests list
                         loadDriverRequests(driver.id)
                     }
                     .onFailure { exception ->
                         Log.e(TAG, "Failed to create fuel request", exception)
                         _requestState.value = RequestState.Error(exception.message ?: "Failed to submit request")
+
+                        // Fallback to local storage if Firebase fails
+                        val newRequest = FuelRequest(
+                            id = UUID.randomUUID().toString(),
+                            driverId = driver.id,
+                            driverName = driver.name,
+                            vehicleId = vehicleId,
+                            requestedAmount = requestedAmount,
+                            status = RequestStatus.PENDING,
+                            requestDate = Date().time,
+                            tripDetails = tripDetails,
+                            notes = notes
+                        )
+
+                        // Add to the current list
+                        val currentList = _driverRequests.value.toMutableList()
+                        currentList.add(0, newRequest) // Add at the beginning
+                        _driverRequests.value = currentList
+
+                        _requestState.value = RequestState.Success("Fuel request saved locally due to connection issues. It will be synced later.")
                     }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception creating fuel request", e)
