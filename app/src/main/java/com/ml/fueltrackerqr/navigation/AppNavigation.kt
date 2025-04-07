@@ -57,7 +57,8 @@ fun AppNavigation(
     val adminViewModel: AdminViewModel = viewModel()
     val gasStationViewModel: GasStationViewModel = viewModel()
 
-    val authState by authViewModel.authState.collectAsState()
+    // Don't collect auth state here to avoid potential IPC issues
+    // We'll handle auth in each screen instead
 
     NavHost(
         navController = navController,
@@ -207,49 +208,6 @@ fun AppNavigation(
         }
     }
 
-    // Handle authentication state changes
-    when (authState) {
-        is AuthState.Authenticated -> {
-            val user = (authState as AuthState.Authenticated).user
-            when (user.role) {
-                UserRole.DRIVER -> {
-                    if (navController.currentDestination?.route == AppScreen.Login.name ||
-                        navController.currentDestination?.route == AppScreen.Register.name
-                    ) {
-                        navController.navigate(AppScreen.DriverDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
-                        }
-                    }
-                }
-                UserRole.ADMIN -> {
-                    if (navController.currentDestination?.route == AppScreen.Login.name ||
-                        navController.currentDestination?.route == AppScreen.Register.name
-                    ) {
-                        navController.navigate(AppScreen.AdminDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
-                        }
-                    }
-                }
-                UserRole.GAS_STATION -> {
-                    if (navController.currentDestination?.route == AppScreen.Login.name ||
-                        navController.currentDestination?.route == AppScreen.Register.name
-                    ) {
-                        navController.navigate(AppScreen.GasStationDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
-                        }
-                    }
-                }
-            }
-        }
-        is AuthState.Unauthenticated -> {
-            if (navController.currentDestination?.route != AppScreen.Login.name &&
-                navController.currentDestination?.route != AppScreen.Register.name
-            ) {
-                navController.navigate(AppScreen.Login.name) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-        }
-        else -> {}
-    }
+    // Auth state handling has been moved to individual screens
+    // to avoid potential IPC issues
 }

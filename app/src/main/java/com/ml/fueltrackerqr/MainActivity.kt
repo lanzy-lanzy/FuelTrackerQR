@@ -10,31 +10,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.FirebaseApp
 import com.ml.fueltrackerqr.navigation.AppNavigation
-import com.ml.fueltrackerqr.ui.theme.FuelTrackerQRTheme
+import com.ml.fueltrackerqr.navigation.AppScreen
+import com.ml.fueltrackerqr.ui.theme.TealCoralTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate started")
 
-        // Initialize Firebase
-        try {
-            FirebaseApp.initializeApp(this)
-            Log.d("MainActivity", "Firebase initialized successfully")
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Firebase initialization failed", e)
-        }
+        // Always start with Login screen
+        val startDestination = AppScreen.Login.name
 
+        // Set up UI
         enableEdgeToEdge()
         setContent {
-            FuelTrackerQRTheme {
+            TealCoralTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+                    AppNavigation(
+                        navController = navController,
+                        startDestination = startDestination
+                    )
                 }
             }
         }
