@@ -7,4 +7,13 @@
         android:centerColor="#00897B"
         android:startColor="#004D40"
         android:type="linear" />
+
+    <!-- Add subtle pattern overlay -->
+    <item>
+        <bitmap
+            android:src="@drawable/subtle_pattern"
+            android:tileMode="repeat"
+            android:gravity="center"
+            android:alpha="0.05" />
+    </item>
 </shape>

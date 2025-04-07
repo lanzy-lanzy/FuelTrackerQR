@@ -8,7 +8,6 @@ import android.os.Looper
 import android.util.Log
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
@@ -17,7 +16,7 @@ import androidx.cardview.widget.CardView
 class SplashActivity : AppCompatActivity() {
 
     private val TAG = "SplashActivity"
-    private val SPLASH_DELAY = 1500L // 1.5 seconds
+    private val SPLASH_DELAY = 2000L // 2 seconds
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +35,10 @@ class SplashActivity : AppCompatActivity() {
         val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)
         val slideFromLeft = AnimationUtils.loadAnimation(this, R.anim.slide_from_left)
         val slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right)
+        val pulseAnimation = AnimationUtils.loadAnimation(this, R.anim.pulse_scale)
 
         // Apply animations
-        logoBackground.startAnimation(fadeIn)
+        logoBackground.startAnimation(pulseAnimation)
         logoImageView.startAnimation(fadeIn)
         titleCard.startAnimation(slideFromLeft)
         subtitleCard.startAnimation(slideFromRight)
@@ -53,8 +53,11 @@ class SplashActivity : AppCompatActivity() {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 Log.d(TAG, "Starting MainActivity")
                 startActivity(intent)
-                Log.d(TAG, "MainActivity started successfully")
 
+                // Add a nice transition animation
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+
+                Log.d(TAG, "MainActivity started successfully")
                 // Finish this activity
                 finish()
                 Log.d(TAG, "SplashActivity finished")
@@ -64,11 +67,5 @@ class SplashActivity : AppCompatActivity() {
                 finish()
             }
         }, SPLASH_DELAY)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        // Ensure we finish this activity when it's paused
-        finish()
     }
 }
