@@ -38,6 +38,7 @@ import com.ml.fueltrackerqr.ui.components.AdminDashboardCards
 import com.ml.fueltrackerqr.ui.components.DashboardSectionHeader
 import com.ml.fueltrackerqr.ui.components.GradientBackground
 import com.ml.fueltrackerqr.ui.components.GradientBrushes
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.ui.components.StatsRow
 import com.ml.fueltrackerqr.ui.theme.BackgroundDark
 import com.ml.fueltrackerqr.ui.theme.Primary
@@ -112,8 +113,7 @@ fun AdminDashboardScreen(
             )
         }
     ) { padding ->
-        GradientBackground(
-            brush = GradientBrushes.backgroundGradient,
+        SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {

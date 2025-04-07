@@ -1,7 +1,9 @@
 package com.ml.fueltrackerqr.repository
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ml.fueltrackerqr.firebase.FirebaseConfig
+import com.ml.fueltrackerqr.firebase.FirebaseNotInitializedException
 import com.ml.fueltrackerqr.model.Vehicle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,12 +14,23 @@ import java.util.UUID
  * Repository class for vehicle-related operations
  */
 class VehicleRepository {
-    private val firestore = FirebaseConfig.firestore
-    private val vehiclesCollection = firestore.collection(FirebaseConfig.VEHICLES_COLLECTION)
-    
+    private val TAG = "VehicleRepository"
+
+    // Lazy initialization of Firebase services to handle potential initialization errors
+    private val firestore: FirebaseFirestore
+        get() = try {
+            FirebaseConfig.firestore
+        } catch (e: FirebaseNotInitializedException) {
+            Log.e(TAG, "Firebase Firestore not initialized", e)
+            throw e
+        }
+
+    private val vehiclesCollection
+        get() = firestore.collection(FirebaseConfig.VEHICLES_COLLECTION)
+
     /**
      * Add a new vehicle
-     * 
+     *
      * @param registrationNumber Registration number of the vehicle
      * @param make Make of the vehicle
      * @param model Model of the vehicle
@@ -48,17 +61,17 @@ class VehicleRepository {
                 tankCapacity = tankCapacity,
                 assignedDriverId = assignedDriverId
             )
-            
+
             vehiclesCollection.document(vehicleId).set(vehicle).await()
             Result.success(vehicle)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-    
+
     /**
      * Get all vehicles
-     * 
+     *
      * @return Flow emitting a list of all vehicles
      */
     fun getAllVehicles(): Flow<List<Vehicle>> = flow {
@@ -72,10 +85,10 @@ class VehicleRepository {
             emit(emptyList())
         }
     }
-    
+
     /**
      * Get vehicles assigned to a specific driver
-     * 
+     *
      * @param driverId ID of the driver
      * @return Flow emitting a list of vehicles
      */
@@ -85,7 +98,7 @@ class VehicleRepository {
                 .whereEqualTo(FirebaseConfig.FIELD_VEHICLE_DRIVER_ID, driverId)
                 .get()
                 .await()
-            
+
             val vehicles = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(Vehicle::class.java)
             }
@@ -94,10 +107,10 @@ class VehicleRepository {
             emit(emptyList())
         }
     }
-    
+
     /**
      * Get a vehicle by ID
-     * 
+     *
      * @param vehicleId ID of the vehicle
      * @return Result containing the Vehicle or an exception
      */
@@ -115,10 +128,10 @@ class VehicleRepository {
             Result.failure(e)
         }
     }
-    
+
     /**
      * Update a vehicle
-     * 
+     *
      * @param vehicle The updated vehicle object
      * @return Result indicating success or failure
      */
@@ -130,10 +143,10 @@ class VehicleRepository {
             Result.failure(e)
         }
     }
-    
+
     /**
      * Assign a vehicle to a driver
-     * 
+     *
      * @param vehicleId ID of the vehicle
      * @param driverId ID of the driver
      * @return Result containing the updated Vehicle or an exception
@@ -144,10 +157,10 @@ class VehicleRepository {
             if (vehicleResult.isFailure) {
                 return Result.failure(vehicleResult.exceptionOrNull() ?: Exception("Vehicle not found"))
             }
-            
+
             val vehicle = vehicleResult.getOrNull()!!
             val updatedVehicle = vehicle.copy(assignedDriverId = driverId)
-            
+
             vehiclesCollection.document(vehicleId).set(updatedVehicle).await()
             Result.success(updatedVehicle)
         } catch (e: Exception) {

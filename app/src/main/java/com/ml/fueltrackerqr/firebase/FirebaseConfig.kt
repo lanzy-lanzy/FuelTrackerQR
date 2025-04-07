@@ -8,9 +8,21 @@ import com.google.firebase.firestore.FirebaseFirestore
  * Object containing Firebase instances and collection references
  */
 object FirebaseConfig {
-    // Firebase instances
-    val auth = FirebaseAuth.getInstance()
-    val firestore = FirebaseFirestore.getInstance()
+    private const val TAG = "FirebaseConfig"
+
+    // Firebase instances - initialized lazily to avoid crashes
+    private var _auth: FirebaseAuth? = null
+    private var _firestore: FirebaseFirestore? = null
+
+    // Safe accessors with null checks
+    val auth: FirebaseAuth
+        get() = _auth ?: throw FirebaseNotInitializedException("Firebase Auth not initialized")
+
+    val firestore: FirebaseFirestore
+        get() = _firestore ?: throw FirebaseNotInitializedException("Firebase Firestore not initialized")
+
+    // Initialization flag
+    private var isInitialized = false
 
     // Collection references
     const val USERS_COLLECTION = "users"
@@ -51,4 +63,39 @@ object FirebaseConfig {
     const val FIELD_VEHICLE_FUEL_TYPE = "fuelType"
     const val FIELD_VEHICLE_TANK_CAPACITY = "tankCapacity"
     const val FIELD_VEHICLE_DRIVER_ID = "assignedDriverId"
+
+    /**
+     * Initialize Firebase services
+     * This should be called from the Application class
+     */
+    fun initialize() {
+        if (isInitialized) {
+            Log.d(TAG, "Firebase already initialized")
+            return
+        }
+
+        try {
+            _auth = FirebaseAuth.getInstance()
+            _firestore = FirebaseFirestore.getInstance()
+            isInitialized = true
+            Log.d(TAG, "Firebase services initialized successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing Firebase services", e)
+            isInitialized = false
+            _auth = null
+            _firestore = null
+        }
+    }
+
+    /**
+     * Check if Firebase is initialized
+     */
+    fun isInitialized(): Boolean {
+        return isInitialized
+    }
 }
+
+/**
+ * Exception thrown when Firebase is not properly initialized
+ */
+class FirebaseNotInitializedException(message: String) : Exception(message)

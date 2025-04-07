@@ -1,7 +1,10 @@
 package com.ml.fueltrackerqr.repository
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ml.fueltrackerqr.firebase.FirebaseConfig
+import com.ml.fueltrackerqr.firebase.FirebaseNotInitializedException
 import com.ml.fueltrackerqr.model.User
 import com.ml.fueltrackerqr.model.UserRole
 import kotlinx.coroutines.tasks.await
@@ -12,9 +15,27 @@ import kotlinx.coroutines.flow.flow
  * Repository class for user-related operations
  */
 class UserRepository {
-    private val auth = FirebaseConfig.auth
-    private val firestore = FirebaseConfig.firestore
-    private val usersCollection = firestore.collection(FirebaseConfig.USERS_COLLECTION)
+    private val TAG = "UserRepository"
+
+    // Lazy initialization of Firebase services to handle potential initialization errors
+    private val auth: FirebaseAuth
+        get() = try {
+            FirebaseConfig.auth
+        } catch (e: FirebaseNotInitializedException) {
+            Log.e(TAG, "Firebase Auth not initialized", e)
+            throw e
+        }
+
+    private val firestore: FirebaseFirestore
+        get() = try {
+            FirebaseConfig.firestore
+        } catch (e: FirebaseNotInitializedException) {
+            Log.e(TAG, "Firebase Firestore not initialized", e)
+            throw e
+        }
+
+    private val usersCollection
+        get() = firestore.collection(FirebaseConfig.USERS_COLLECTION)
 
     /**
      * Register a new user

@@ -1,5 +1,6 @@
 package com.ml.fueltrackerqr.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +22,7 @@ import com.ml.fueltrackerqr.viewmodel.AuthState
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
 import com.ml.fueltrackerqr.viewmodel.GasStationViewModel
+import com.ml.fueltrackerqr.ErrorScreen
 
 /**
  * Enum representing the different screens in the application
@@ -52,39 +54,60 @@ fun AppNavigation(
     navController: NavHostController,
     startDestination: String = AppScreen.Login.name
 ) {
+    val TAG = "AppNavigation"
+    Log.d(TAG, "Initializing AppNavigation with startDestination: $startDestination")
+    
+    // Create ViewModels
+    Log.d(TAG, "Creating ViewModels")
     val authViewModel: AuthViewModel = viewModel()
     val driverViewModel: DriverViewModel = viewModel()
     val adminViewModel: AdminViewModel = viewModel()
     val gasStationViewModel: GasStationViewModel = viewModel()
+    Log.d(TAG, "ViewModels created successfully")
 
     // Don't collect auth state here to avoid potential IPC issues
     // We'll handle auth in each screen instead
 
+    Log.d(TAG, "Setting up NavHost with startDestination: $startDestination")
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
         // Authentication screens
+        Log.d(TAG, "Setting up Login screen composable")
         composable(AppScreen.Login.name) {
+            Log.d(TAG, "Composing LoginScreen")
             LoginScreen(
                 onLoginSuccess = { user ->
+                    Log.d(TAG, "Login successful for user role: ${user.role}")
                     when (user.role) {
-                        UserRole.DRIVER -> navController.navigate(AppScreen.DriverDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
+                        UserRole.DRIVER -> {
+                            Log.d(TAG, "Navigating to DriverDashboard")
+                            navController.navigate(AppScreen.DriverDashboard.name) {
+                                popUpTo(AppScreen.Login.name) { inclusive = true }
+                            }
                         }
-                        UserRole.ADMIN -> navController.navigate(AppScreen.AdminDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
+                        UserRole.ADMIN -> {
+                            Log.d(TAG, "Navigating to AdminDashboard")
+                            navController.navigate(AppScreen.AdminDashboard.name) {
+                                popUpTo(AppScreen.Login.name) { inclusive = true }
+                            }
                         }
-                        UserRole.GAS_STATION -> navController.navigate(AppScreen.GasStationDashboard.name) {
-                            popUpTo(AppScreen.Login.name) { inclusive = true }
+                        UserRole.GAS_STATION -> {
+                            Log.d(TAG, "Navigating to GasStationDashboard")
+                            navController.navigate(AppScreen.GasStationDashboard.name) {
+                                popUpTo(AppScreen.Login.name) { inclusive = true }
+                            }
                         }
                     }
                 },
                 onRegisterClick = {
+                    Log.d(TAG, "Register button clicked, navigating to Register screen")
                     navController.navigate(AppScreen.Register.name)
                 },
                 authViewModel = authViewModel
             )
+            Log.d(TAG, "LoginScreen composed successfully")
         }
 
         composable(AppScreen.Register.name) {
@@ -207,7 +230,4 @@ fun AppNavigation(
             )
         }
     }
-
-    // Auth state handling has been moved to individual screens
-    // to avoid potential IPC issues
 }

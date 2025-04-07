@@ -80,7 +80,7 @@ fun PrimaryButton(
         text = text,
         onClick = onClick,
         modifier = modifier,
-        brush = GradientBrushes.primaryGradient,
+        brush = GradientBrushes.tealCoralGradient,
         enabled = enabled
     )
 }

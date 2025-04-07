@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.GasStationViewModel
 
@@ -64,10 +65,8 @@ fun GasStationDashboardScreen(
             )
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+        SplashGradientBackground(
+            modifier = Modifier.padding(padding)
         ) {
             if (currentUser == null) {
                 CircularProgressIndicator(

@@ -16,11 +16,12 @@ import androidx.cardview.widget.CardView
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
 
+    private val TAG = "SplashActivity"
     private val SPLASH_DELAY = 1500L // 1.5 seconds
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("SplashActivity", "onCreate started")
+        Log.d(TAG, "onCreate started")
 
         // Set the splash screen content view
         setContentView(R.layout.activity_splash)
@@ -44,12 +45,24 @@ class SplashActivity : AppCompatActivity() {
 
         // Set a simple timer to navigate to MainActivity after delay
         Handler(Looper.getMainLooper()).postDelayed({
-            // Create a simple intent with no extras
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            try {
+                Log.d(TAG, "Preparing to launch MainActivity")
+                // Create a simple intent with no extras
+                val intent = Intent(this, MainActivity::class.java)
+                // Add flags to create a new task
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                Log.d(TAG, "Starting MainActivity")
+                startActivity(intent)
+                Log.d(TAG, "MainActivity started successfully")
 
-            // Finish this activity
-            finish()
+                // Finish this activity
+                finish()
+                Log.d(TAG, "SplashActivity finished")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error launching MainActivity", e)
+                // If there's an error, still finish this activity to avoid being stuck on splash
+                finish()
+            }
         }, SPLASH_DELAY)
     }
 

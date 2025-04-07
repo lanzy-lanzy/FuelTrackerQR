@@ -1,7 +1,8 @@
 package com.ml.fueltrackerqr.ui.screens.auth
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -38,19 +39,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.tween
 import com.ml.fueltrackerqr.R
 import com.ml.fueltrackerqr.model.User
 import com.ml.fueltrackerqr.ui.components.GradientBackground
 import com.ml.fueltrackerqr.ui.components.GradientBrushes
 import com.ml.fueltrackerqr.ui.components.PrimaryButton
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.ui.theme.BackgroundDark
+import com.ml.fueltrackerqr.ui.theme.DarkTeal
 import com.ml.fueltrackerqr.ui.theme.Primary
 import com.ml.fueltrackerqr.ui.theme.TextPrimary
 import com.ml.fueltrackerqr.viewmodel.AuthState
@@ -69,30 +72,48 @@ fun LoginScreen(
     onRegisterClick: () -> Unit,
     authViewModel: AuthViewModel
 ) {
+    val TAG = "LoginScreen"
+    Log.d(TAG, "Composing LoginScreen")
+
     val authState by authViewModel.authState.collectAsState()
+    Log.d(TAG, "Current authState: ${authState::class.simpleName}")
+
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     LaunchedEffect(authState) {
+        Log.d(TAG, "LaunchedEffect triggered with authState: ${authState::class.simpleName}")
         when (authState) {
             is AuthState.Authenticated -> {
-                onLoginSuccess((authState as AuthState.Authenticated).user)
+                Log.d(TAG, "User authenticated, calling onLoginSuccess")
+                val user = (authState as AuthState.Authenticated).user
+                Log.d(TAG, "Authenticated user: ${user.name}, role: ${user.role}")
+                onLoginSuccess(user)
             }
             is AuthState.Error -> {
+                Log.d(TAG, "Auth error: ${(authState as AuthState.Error).message}")
                 snackbarHostState.showSnackbar((authState as AuthState.Error).message)
                 authViewModel.clearError()
             }
-            else -> {}
+            is AuthState.Initial -> {
+                Log.d(TAG, "Auth state is Initial")
+            }
+            is AuthState.Loading -> {
+                Log.d(TAG, "Auth state is Loading")
+            }
+            is AuthState.Unauthenticated -> {
+                Log.d(TAG, "Auth state is Unauthenticated")
+            }
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        GradientBackground(
-            brush = GradientBrushes.backgroundGradient,
+        SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -118,31 +139,14 @@ fun LoginScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // App title
-                    Text(
-                        text = "Fuel Tracker QR",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Text(
-                        text = "Sign in to continue",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = TextPrimary.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(bottom = 32.dp)
-                    )
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     // Login form in a semi-transparent card
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(BackgroundDark.copy(alpha = 0.7f))
+                            .background(DarkTeal.copy(alpha = 0.7f))
                             .padding(24.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -152,15 +156,7 @@ fun LoginScreen(
                                 onValueChange = { email = it },
                                 label = { Text("Email") },
                                 modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -172,15 +168,7 @@ fun LoginScreen(
                                 label = { Text("Password") },
                                 modifier = Modifier.fillMaxWidth(),
                                 visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                             )
 
                             Spacer(modifier = Modifier.height(32.dp))
@@ -189,8 +177,23 @@ fun LoginScreen(
                             PrimaryButton(
                                 text = "Sign In",
                                 onClick = {
+                                    Log.d(TAG, "Login button clicked")
                                     if (email.isNotBlank() && password.isNotBlank()) {
-                                        authViewModel.login(email, password)
+                                        Log.d(TAG, "Attempting login with email: $email")
+                                        try {
+                                            authViewModel.login(email, password)
+                                            Log.d(TAG, "Login request sent successfully")
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Error during login", e)
+                                            // Show error via Toast
+                                            Toast.makeText(
+                                                context,
+                                                "Login error: ${e.message ?: "Unknown error"}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    } else {
+                                        Log.d(TAG, "Email or password is blank")
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),

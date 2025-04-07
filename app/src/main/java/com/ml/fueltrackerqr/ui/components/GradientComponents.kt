@@ -32,6 +32,9 @@ import com.ml.fueltrackerqr.ui.theme.SecondaryDark
 import com.ml.fueltrackerqr.ui.theme.StatusApproved
 import com.ml.fueltrackerqr.ui.theme.StatusDeclined
 import com.ml.fueltrackerqr.ui.theme.StatusPending
+import com.ml.fueltrackerqr.ui.theme.DarkTeal
+import com.ml.fueltrackerqr.ui.theme.MediumTeal
+import com.ml.fueltrackerqr.ui.theme.LightCoral
 
 /**
  * Predefined gradient brushes for use throughout the app
@@ -41,44 +44,61 @@ object GradientBrushes {
     val primaryGradient = Brush.verticalGradient(
         colors = listOf(PrimaryDark, Primary, PrimaryLight)
     )
-    
+
     val secondaryGradient = Brush.verticalGradient(
         colors = listOf(SecondaryDark, Secondary)
     )
-    
+
     // Background gradients
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(BackgroundDark, BackgroundMedium, BackgroundLight)
     )
-    
+
     val lightBackgroundGradient = Brush.verticalGradient(
         colors = listOf(Color.White, Color(0xFFF3F4F6))
     )
-    
+
+    // Splash screen gradient (Teal-Coral theme)
+    val splashGradient = Brush.linearGradient(
+        colors = listOf(DarkTeal, MediumTeal, LightCoral),
+        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+        end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
+    )
+
+    // Vertical version of splash gradient
+    val splashVerticalGradient = Brush.verticalGradient(
+        colors = listOf(DarkTeal, MediumTeal, LightCoral)
+    )
+
     // Status gradients
     val approvedGradient = Brush.horizontalGradient(
         colors = listOf(StatusApproved, AccentGreen)
     )
-    
+
     val pendingGradient = Brush.horizontalGradient(
         colors = listOf(StatusPending, AccentOrange)
     )
-    
+
     val declinedGradient = Brush.horizontalGradient(
         colors = listOf(StatusDeclined, Color(0xFFB91C1C))
     )
-    
+
     // Special gradients
     val purpleBlueGradient = Brush.horizontalGradient(
         colors = listOf(AccentPurple, Primary)
     )
-    
+
     val orangeRedGradient = Brush.horizontalGradient(
         colors = listOf(AccentOrange, StatusDeclined)
     )
-    
+
     val greenBlueGradient = Brush.horizontalGradient(
         colors = listOf(AccentGreen, PrimaryLight)
+    )
+
+    // Teal-Coral gradients
+    val tealCoralGradient = Brush.horizontalGradient(
+        colors = listOf(DarkTeal, LightCoral)
     )
 }
 
@@ -112,6 +132,23 @@ fun GradientBackground(
     GradientBox(
         modifier = modifier.fillMaxSize(),
         brush = brush,
+        contentAlignment = contentAlignment,
+        content = content
+    )
+}
+
+/**
+ * A full screen box with the splash screen gradient background
+ */
+@Composable
+fun SplashGradientBackground(
+    modifier: Modifier = Modifier,
+    contentAlignment: Alignment = Alignment.Center,
+    content: @Composable BoxScope.() -> Unit
+) {
+    GradientBox(
+        modifier = modifier.fillMaxSize(),
+        brush = GradientBrushes.splashGradient,
         contentAlignment = contentAlignment,
         content = content
     )

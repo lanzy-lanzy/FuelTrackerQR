@@ -33,6 +33,11 @@ val StatusPending = Color(0xFFFCD34D)   // Yellow
 val StatusDeclined = Color(0xFFEF4444)  // Red
 val StatusDispensed = Color(0xFF60A5FA) // Blue
 
+// Teal-Coral Theme Colors (from splash screen)
+val DarkTeal = Color(0xFF004D40)
+val MediumTeal = Color(0xFF00897B)
+val LightCoral = Color(0xFFF57C73)
+
 // Legacy colors (keeping for backward compatibility)
 val FuelBlue80 = PrimaryLight
 val FuelGreen80 = AccentGreen

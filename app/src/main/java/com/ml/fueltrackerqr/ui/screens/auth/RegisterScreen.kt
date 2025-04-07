@@ -57,7 +57,9 @@ import com.ml.fueltrackerqr.model.UserRole
 import com.ml.fueltrackerqr.ui.components.GradientBackground
 import com.ml.fueltrackerqr.ui.components.GradientBrushes
 import com.ml.fueltrackerqr.ui.components.PrimaryButton
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.ui.theme.BackgroundDark
+import com.ml.fueltrackerqr.ui.theme.DarkTeal
 import com.ml.fueltrackerqr.ui.theme.Primary
 import com.ml.fueltrackerqr.ui.theme.TextPrimary
 import com.ml.fueltrackerqr.viewmodel.AuthState
@@ -121,8 +123,7 @@ fun RegisterScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        GradientBackground(
-            brush = GradientBrushes.backgroundGradient,
+        SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -148,7 +149,7 @@ fun RegisterScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = BackgroundDark.copy(alpha = 0.7f)
+                            containerColor = DarkTeal.copy(alpha = 0.7f)
                         )
                     ) {
                         Column(

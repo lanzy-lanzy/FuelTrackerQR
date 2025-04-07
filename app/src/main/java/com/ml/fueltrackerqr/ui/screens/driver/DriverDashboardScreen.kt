@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ml.fueltrackerqr.model.FuelRequest
 import com.ml.fueltrackerqr.model.RequestStatus
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
 import java.text.SimpleDateFormat
@@ -46,7 +47,7 @@ import java.util.Locale
 
 /**
  * Dashboard screen for drivers
- * 
+ *
  * @param onNewRequestClick Callback when new request button is clicked
  * @param onLogoutClick Callback when logout button is clicked
  * @param driverViewModel ViewModel for driver operations
@@ -62,14 +63,14 @@ fun DriverDashboardScreen(
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
     val driverRequests by driverViewModel.driverRequests.collectAsState()
-    
+
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             driverViewModel.loadDriverRequests(user.id)
             driverViewModel.loadDriverVehicles(user.id)
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,10 +93,8 @@ fun DriverDashboardScreen(
             )
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+        SplashGradientBackground(
+            modifier = Modifier.padding(padding)
         ) {
             if (currentUser == null) {
                 CircularProgressIndicator(
@@ -111,16 +110,16 @@ fun DriverDashboardScreen(
                         text = "Welcome, ${currentUser?.name}",
                         style = MaterialTheme.typography.headlineSmall
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Text(
                         text = "Your Fuel Requests",
                         style = MaterialTheme.typography.titleLarge
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     if (driverRequests.isEmpty()) {
                         Box(
                             modifier = Modifier
@@ -151,7 +150,7 @@ fun DriverDashboardScreen(
 
 /**
  * Card displaying a fuel request
- * 
+ *
  * @param request The fuel request to display
  */
 @Composable
@@ -174,12 +173,12 @@ fun FuelRequestCard(request: FuelRequest) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 RequestStatusChip(status = request.status)
             }
-            
+
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -195,7 +194,7 @@ fun FuelRequestCard(request: FuelRequest) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
+
                 if (request.status == RequestStatus.DISPENSED) {
                     Column {
                         Text(
@@ -210,16 +209,16 @@ fun FuelRequestCard(request: FuelRequest) {
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = "Trip Details: ${request.tripDetails}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -228,14 +227,14 @@ fun FuelRequestCard(request: FuelRequest) {
                     text = "Requested: ${formatDate(request.requestDate)}",
                     style = MaterialTheme.typography.bodySmall
                 )
-                
+
                 if (request.status == RequestStatus.APPROVED || request.status == RequestStatus.DECLINED) {
                     Text(
                         text = "Reviewed: ${formatDate(request.approvalDate)}",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                
+
                 if (request.status == RequestStatus.DISPENSED) {
                     Text(
                         text = "Dispensed: ${formatDate(request.dispensedDate)}",
@@ -243,7 +242,7 @@ fun FuelRequestCard(request: FuelRequest) {
                     )
                 }
             }
-            
+
             if (request.notes.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -257,7 +256,7 @@ fun FuelRequestCard(request: FuelRequest) {
 
 /**
  * Chip displaying the status of a request
- * 
+ *
  * @param status Status of the request
  */
 @Composable
@@ -268,7 +267,7 @@ fun RequestStatusChip(status: RequestStatus) {
         RequestStatus.DECLINED -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
         RequestStatus.DISPENSED -> Pair(Color(0xFFE3F2FD), Color(0xFF1565C0))
     }
-    
+
     Box(
         modifier = Modifier
             .padding(4.dp)
@@ -292,9 +291,9 @@ fun RequestStatusChip(status: RequestStatus) {
                     drawCircle(color = textColor)
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(4.dp))
-            
+
             Text(
                 text = status.name,
                 style = MaterialTheme.typography.bodySmall,
@@ -306,7 +305,7 @@ fun RequestStatusChip(status: RequestStatus) {
 
 /**
  * Format a timestamp as a date string
- * 
+ *
  * @param timestamp Timestamp to format
  * @return Formatted date string
  */
