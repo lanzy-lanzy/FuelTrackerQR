@@ -4,9 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -27,13 +31,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -46,12 +52,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import com.ml.fueltrackerqr.model.User
 import com.ml.fueltrackerqr.model.UserRole
 import com.ml.fueltrackerqr.ui.components.GradientBackground
@@ -105,19 +118,25 @@ fun RegisterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Account", color = TextPrimary) },
+                title = {
+                    Text(
+                        "Create Account",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextPrimary
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
-                    titleContentColor = TextPrimary
+                    containerColor = Color(0xFF004D40),
+                    titleContentColor = Color.White
                 )
             )
         },
@@ -134,151 +153,220 @@ fun RegisterScreen(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Join Fuel Tracker QR",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
+                    // Spacer at the top for better layout
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Form card with semi-transparent background
+                    // Enhanced form card with shadow and better styling
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(24.dp),
+                                spotColor = Color(0xFF004D40)
+                            ),
+                        shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = DarkTeal.copy(alpha = 0.7f)
+                            containerColor = Color(0xFF004D40).copy(alpha = 0.85f)
                         )
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Personal information fields
+                            // Form title
+                            Text(
+                                text = "Create Your Account",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Personal information fields with icons
                             OutlinedTextField(
                                 value = name,
                                 onValueChange = { name = it },
                                 label = { Text("Full Name") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Name",
+                                        tint = Color(0xFFF57C73)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth(),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // textColor = TextPrimary,
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4DB6AC),
+                                    unfocusedBorderColor = Color(0xFF80CBC4),
+                                    focusedLabelColor = Color(0xFF4DB6AC),
+                                    unfocusedLabelColor = Color(0xFF80CBC4),
+                                    cursorColor = Color(0xFF4DB6AC),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             OutlinedTextField(
                                 value = email,
                                 onValueChange = { email = it },
                                 label = { Text("Email") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Email,
+                                        contentDescription = "Email",
+                                        tint = Color(0xFFF57C73)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // textColor = TextPrimary,
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4DB6AC),
+                                    unfocusedBorderColor = Color(0xFF80CBC4),
+                                    focusedLabelColor = Color(0xFF4DB6AC),
+                                    unfocusedLabelColor = Color(0xFF80CBC4),
+                                    cursorColor = Color(0xFF4DB6AC),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             OutlinedTextField(
                                 value = password,
                                 onValueChange = { password = it },
                                 label = { Text("Password") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Password",
+                                        tint = Color(0xFFF57C73)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // textColor = TextPrimary,
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4DB6AC),
+                                    unfocusedBorderColor = Color(0xFF80CBC4),
+                                    focusedLabelColor = Color(0xFF4DB6AC),
+                                    unfocusedLabelColor = Color(0xFF80CBC4),
+                                    cursorColor = Color(0xFF4DB6AC),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             OutlinedTextField(
                                 value = confirmPassword,
                                 onValueChange = { confirmPassword = it },
                                 label = { Text("Confirm Password") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Confirm Password",
+                                        tint = Color(0xFFF57C73)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 visualTransformation = PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // textColor = TextPrimary,
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4DB6AC),
+                                    unfocusedBorderColor = Color(0xFF80CBC4),
+                                    focusedLabelColor = Color(0xFF4DB6AC),
+                                    unfocusedLabelColor = Color(0xFF80CBC4),
+                                    cursorColor = Color(0xFF4DB6AC),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             OutlinedTextField(
                                 value = phoneNumber,
                                 onValueChange = { phoneNumber = it },
                                 label = { Text("Phone Number (Optional)") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Phone,
+                                        contentDescription = "Phone",
+                                        tint = Color(0xFFF57C73)
+                                    )
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                // Using basic colors instead of the experimental API
-                                // colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    // textColor = TextPrimary,
-                                    // cursorColor = Primary,
-                                    // focusedBorderColor = Primary,
-                                    // unfocusedBorderColor = TextPrimary.copy(alpha = 0.5f),
-                                    // focusedLabelColor = Primary,
-                                    // unfocusedLabelColor = TextPrimary.copy(alpha = 0.7f)
-                                // )
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF4DB6AC),
+                                    unfocusedBorderColor = Color(0xFF80CBC4),
+                                    focusedLabelColor = Color(0xFF4DB6AC),
+                                    unfocusedLabelColor = Color(0xFF80CBC4),
+                                    cursorColor = Color(0xFF4DB6AC),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Role selection
-                            Text(
-                                text = "Select Your Role",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
+                            // Enhanced role selection with card background
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF00695C).copy(alpha = 0.7f)
                                 ),
-                                color = TextPrimary,
-                                modifier = Modifier.align(Alignment.Start)
-                            )
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "Select Your Role",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = Color.White,
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    )
 
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            UserRoleSelector(
-                                selectedRole = selectedRole,
-                                onRoleSelected = { selectedRole = it }
-                            )
+                                    UserRoleSelector(
+                                        selectedRole = selectedRole,
+                                        onRoleSelected = { selectedRole = it }
+                                    )
+                                }
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Register button with gradient
-                    PrimaryButton(
-                        text = "Create Account",
+                    // Enhanced register button with gradient and animation
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
+                    val buttonElevation by animateDpAsState(
+                        targetValue = if (isPressed) 2.dp else 6.dp,
+                        label = "Button Elevation"
+                    )
+
+                    Button(
                         onClick = {
                             if (validateInputs(name, email, password, confirmPassword)) {
                                 authViewModel.register(
@@ -289,12 +377,41 @@ fun RegisterScreen(
                                     phoneNumber = phoneNumber
                                 )
                             } else {
-                                // Show validation error
+                                // Show validation error via snackbar
+                                // This would be handled in LaunchedEffect
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = authState !is AuthState.Loading
-                    )
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .shadow(buttonElevation, RoundedCornerShape(28.dp)),
+                        enabled = authState !is AuthState.Loading,
+                        interactionSource = interactionSource,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(Color(0xFFF57C73), Color(0xFF00897B))
+                                    ),
+                                    shape = RoundedCornerShape(28.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Create Account",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
 
                 // Loading indicator
@@ -315,7 +432,7 @@ fun RegisterScreen(
 }
 
 /**
- * Component for selecting a user role
+ * Enhanced component for selecting a user role with better visual styling
  *
  * @param selectedRole Currently selected role
  * @param onRoleSelected Callback when a role is selected
@@ -329,31 +446,40 @@ fun UserRoleSelector(
         modifier = Modifier.fillMaxWidth()
     ) {
         UserRole.values().forEach { role ->
-            Row(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (selectedRole == role) BackgroundDark.copy(alpha = 0.5f) else Color.Transparent
-                    )
-                    .padding(vertical = 8.dp, horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selectedRole == role)
+                        Color(0xFF4DB6AC).copy(alpha = 0.3f)
+                    else
+                        Color(0xFF004D40).copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                RadioButton(
-                    selected = selectedRole == role,
-                    onClick = { onRoleSelected(role) },
-                    colors = androidx.compose.material3.RadioButtonDefaults.colors(
-                        selectedColor = Primary,
-                        unselectedColor = TextPrimary.copy(alpha = 0.7f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = selectedRole == role,
+                        onClick = { onRoleSelected(role) },
+                        colors = androidx.compose.material3.RadioButtonDefaults.colors(
+                            selectedColor = Color(0xFFF57C73),
+                            unselectedColor = Color.White.copy(alpha = 0.7f)
+                        )
                     )
-                )
-                Text(
-                    text = role.name.replace('_', ' ').capitalize(),
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = if (selectedRole == role) FontWeight.Bold else FontWeight.Normal
-                    ),
-                    color = TextPrimary
-                )
+                    Text(
+                        text = role.name.replace('_', ' ').capitalize(),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = if (selectedRole == role) FontWeight.Bold else FontWeight.Normal
+                        ),
+                        color = Color.White
+                    )
+                }
             }
         }
     }
