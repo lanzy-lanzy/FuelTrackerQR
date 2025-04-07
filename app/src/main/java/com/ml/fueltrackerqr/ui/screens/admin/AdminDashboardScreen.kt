@@ -55,7 +55,8 @@ fun AdminDashboardScreen(
     onPendingRequestsClick: () -> Unit,
     onApprovedRequestsClick: () -> Unit,
     onGenerateQRClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onVehicleManagementClick: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var pendingCount by remember { mutableStateOf(0) }
@@ -153,7 +154,8 @@ fun AdminDashboardScreen(
                             onPendingRequestsClick = onPendingRequestsClick,
                             onApprovedRequestsClick = onApprovedRequestsClick,
                             onGenerateQRClick = onGenerateQRClick,
-                            onHistoryClick = onHistoryClick
+                            onHistoryClick = onHistoryClick,
+                            onVehicleManagementClick = onVehicleManagementClick
                         )
                     }
                 }

@@ -165,6 +165,7 @@ fun AdminDashboardCards(
     onApprovedRequestsClick: () -> Unit,
     onGenerateQRClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onVehicleManagementClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -198,6 +199,14 @@ fun AdminDashboardCards(
             icon = Icons.Default.CheckCircle, // Using CheckCircle instead of History
             onClick = onHistoryClick,
             brush = GradientBrushes.purpleBlueGradient
+        )
+
+        DashboardCard(
+            title = "Vehicle Management",
+            subtitle = "Manage and assign vehicles",
+            icon = Icons.Default.CheckCircle, // Using CheckCircle instead of DirectionsCar
+            onClick = onVehicleManagementClick,
+            brush = GradientBrushes.greenBlueGradient
         )
     }
 }

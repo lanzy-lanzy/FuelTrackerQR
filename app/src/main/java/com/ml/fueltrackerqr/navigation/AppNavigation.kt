@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import com.ml.fueltrackerqr.model.UserRole
 import com.ml.fueltrackerqr.ui.screens.admin.AdminDashboardScreen
 import com.ml.fueltrackerqr.ui.screens.admin.RequestDetailScreen
+import com.ml.fueltrackerqr.ui.screens.admin.VehicleManagementScreen
 import com.ml.fueltrackerqr.ui.screens.auth.LoginScreen
 import com.ml.fueltrackerqr.ui.screens.auth.RegisterScreen
 import com.ml.fueltrackerqr.ui.screens.driver.DriverDashboardScreen
@@ -40,7 +41,8 @@ enum class AppScreen {
     PendingRequests,
     ApprovedRequests,
     GenerateQR,
-    RequestHistory
+    RequestHistory,
+    VehicleManagement
 }
 
 /**
@@ -56,7 +58,7 @@ fun AppNavigation(
 ) {
     val TAG = "AppNavigation"
     Log.d(TAG, "Initializing AppNavigation with startDestination: $startDestination")
-    
+
     // Create ViewModels
     Log.d(TAG, "Creating ViewModels")
     val authViewModel: AuthViewModel = viewModel()
@@ -181,6 +183,9 @@ fun AppNavigation(
                     // For testing purposes, navigate to RequestDetail
                     navController.navigate(AppScreen.RequestDetail.name)
                 },
+                onVehicleManagementClick = {
+                    navController.navigate(AppScreen.VehicleManagement.name)
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(AppScreen.Login.name) {
@@ -227,6 +232,15 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 gasStationViewModel = gasStationViewModel
+            )
+        }
+
+        // Vehicle Management screen
+        composable(AppScreen.VehicleManagement.name) {
+            VehicleManagementScreen(
+                onBackToAdminDashboard = {
+                    navController.popBackStack()
+                }
             )
         }
     }
