@@ -20,6 +20,7 @@ enum class UserRole {
  * @property role Role of the user (DRIVER, ADMIN, or GAS_STATION)
  * @property phoneNumber Optional phone number of the user
  * @property vehicleId Optional vehicle ID associated with the user (for drivers)
+ * @property profilePictureUrl URL to the user's profile picture
  */
 @Serializable
 data class User(
@@ -28,5 +29,6 @@ data class User(
     val email: String = "",
     val role: UserRole = UserRole.DRIVER,
     val phoneNumber: String = "",
-    val vehicleId: String = ""
+    val vehicleId: String = "",
+    val profilePictureUrl: String = ""
 )

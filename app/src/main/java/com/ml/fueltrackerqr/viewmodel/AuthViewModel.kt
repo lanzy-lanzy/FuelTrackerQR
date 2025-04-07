@@ -170,6 +170,45 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthState.Unauthenticated
         }
     }
+
+    /**
+     * Update the user's profile picture
+     *
+     * @param profilePictureUrl URL of the new profile picture
+     */
+    fun updateProfilePicture(profilePictureUrl: String) {
+        viewModelScope.launch {
+            val currentUserId = _currentUser.value?.id ?: return@launch
+            Log.d(TAG, "Updating profile picture for user: $currentUserId")
+            Log.d(TAG, "New profile picture URL: $profilePictureUrl")
+
+            try {
+                _authState.value = AuthState.Loading
+
+                userRepository.updateProfilePicture(currentUserId, profilePictureUrl)
+                    .onSuccess { updatedUser ->
+                        _currentUser.value = updatedUser
+                        _authState.value = AuthState.Authenticated(updatedUser)
+                        Log.d(TAG, "Profile picture updated successfully: ${updatedUser.profilePictureUrl}")
+                    }
+                    .onFailure { exception ->
+                        Log.e(TAG, "Failed to update profile picture: ${exception.message}", exception)
+                        // Keep the current user state but show error
+                        _currentUser.value?.let { user ->
+                            _authState.value = AuthState.Authenticated(user)
+                        } ?: run {
+                            _authState.value = AuthState.Error("Failed to update profile picture: ${exception.message}")
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception updating profile picture: ${e.message}", e)
+                // Keep the current user state
+                _currentUser.value?.let { user ->
+                    _authState.value = AuthState.Authenticated(user)
+                }
+            }
+        }
+    }
 }
 
 /**

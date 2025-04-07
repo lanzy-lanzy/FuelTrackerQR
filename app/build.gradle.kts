@@ -82,6 +82,9 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
+    // Cloudinary for image upload
+    implementation("com.cloudinary:cloudinary-android:2.3.1")
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)

@@ -176,4 +176,34 @@ class UserRepository {
             Result.failure(e)
         }
     }
+
+    /**
+     * Update user's profile picture URL
+     *
+     * @param userId ID of the user to update
+     * @param profilePictureUrl New profile picture URL
+     * @return Result containing the updated User object or an exception
+     */
+    suspend fun updateProfilePicture(userId: String, profilePictureUrl: String): Result<User> {
+        return try {
+            // Get current user data
+            val userDoc = usersCollection.document(userId).get().await()
+            if (!userDoc.exists()) {
+                return Result.failure(Exception("User not found"))
+            }
+
+            val user = userDoc.toObject(User::class.java) ?: throw Exception("Failed to parse user data")
+
+            // Update with new profile picture URL
+            val updatedUser = user.copy(profilePictureUrl = profilePictureUrl)
+
+            // Save to Firestore
+            usersCollection.document(userId).set(updatedUser).await()
+
+            Result.success(updatedUser)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in updateProfilePicture", e)
+            Result.failure(e)
+        }
+    }
 }

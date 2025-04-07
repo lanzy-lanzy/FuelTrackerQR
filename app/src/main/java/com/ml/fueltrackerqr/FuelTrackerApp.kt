@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import com.ml.fueltrackerqr.config.CloudinaryConfig
 import com.ml.fueltrackerqr.firebase.FirebaseConfig
 
 /**
@@ -27,6 +28,9 @@ class FuelTrackerApp : Application() {
 
         // Initialize Firebase with retry mechanism
         initializeFirebase()
+
+        // Initialize Cloudinary
+        initializeCloudinary()
     }
 
     /**
@@ -81,6 +85,28 @@ class FuelTrackerApp : Application() {
     private fun showToast(message: String) {
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * Initialize Cloudinary for image uploads
+     */
+    private fun initializeCloudinary() {
+        try {
+            Log.d(TAG, "Initializing Cloudinary")
+            CloudinaryConfig.init(this)
+
+            // Verify initialization
+            if (CloudinaryConfig.isInitialized()) {
+                Log.d(TAG, "Cloudinary initialized successfully")
+                showToast("Cloudinary initialized for profile pictures")
+            } else {
+                Log.e(TAG, "Cloudinary initialization failed")
+                showToast("Failed to initialize Cloudinary. Profile pictures may not work.")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing Cloudinary: ${e.message}", e)
+            showToast("Error initializing Cloudinary: ${e.message}")
         }
     }
 }

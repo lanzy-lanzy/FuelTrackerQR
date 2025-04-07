@@ -56,13 +56,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import com.ml.fueltrackerqr.model.User
 import com.ml.fueltrackerqr.model.Vehicle
 import com.ml.fueltrackerqr.ui.components.GradientBackground
 import com.ml.fueltrackerqr.ui.components.GradientDivider
+import com.ml.fueltrackerqr.ui.components.ProfilePicture
 import com.ml.fueltrackerqr.util.GradientBrushes
 import com.ml.fueltrackerqr.ui.theme.BackgroundDark
 import com.ml.fueltrackerqr.ui.theme.BackgroundLight
@@ -82,6 +85,7 @@ fun DriverProfileScreen(
     driverViewModel: DriverViewModel,
     authViewModel: AuthViewModel
 ) {
+    val context = LocalContext.current
     val currentUser by authViewModel.currentUser.collectAsState()
     val driverVehicles by driverViewModel.driverVehicles.collectAsState()
 
@@ -133,7 +137,20 @@ fun DriverProfileScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Profile header with avatar
-                        ProfileHeader(user = currentUser!!)
+                        ProfileHeader(
+                            user = currentUser!!,
+                            onProfilePictureUpdated = { newPictureUrl ->
+                                // Show toast message
+                                Toast.makeText(
+                                    context,
+                                    "Updating profile picture...",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                // Update profile picture in ViewModel
+                                authViewModel.updateProfilePicture(newPictureUrl)
+                            }
+                        )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -157,7 +174,10 @@ fun DriverProfileScreen(
 }
 
 @Composable
-fun ProfileHeader(user: User) {
+fun ProfileHeader(
+    user: User,
+    onProfilePictureUpdated: (String) -> Unit
+) {
     val avatarScale by animateFloatAsState(
         targetValue = 1f,
         animationSpec = spring(
@@ -171,7 +191,7 @@ fun ProfileHeader(user: User) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Avatar with gradient border
+        // Avatar with gradient border and profile picture
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -197,26 +217,14 @@ fun ProfileHeader(user: User) {
                     )
             )
 
-            // Avatar circle
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(BackgroundLight)
-                    .border(
-                        width = 2.dp,
-                        brush = GradientBrushes.primaryGradient,
-                        shape = CircleShape
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Profile Avatar",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(60.dp)
-                )
-            }
+            // Profile picture component
+            ProfilePicture(
+                profilePictureUrl = user.profilePictureUrl,
+                onProfilePictureUpdated = onProfilePictureUpdated,
+                size = 100,
+                editable = true,
+                borderBrush = GradientBrushes.primaryGradient
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

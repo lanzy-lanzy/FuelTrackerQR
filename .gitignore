@@ -73,6 +73,7 @@ lint/tmp/
 
 # Exclude JDK files
 jdk17/
+jdk/
 
 # Exclude large files
 *.jsa
