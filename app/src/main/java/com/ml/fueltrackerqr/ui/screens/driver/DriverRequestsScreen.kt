@@ -1,9 +1,8 @@
 package com.ml.fueltrackerqr.ui.screens.driver
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,155 +18,99 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.List
-// import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.ml.fueltrackerqr.data.model.FuelRequest
-import com.ml.fueltrackerqr.data.model.RequestStatus
-import com.ml.fueltrackerqr.ui.components.GradientBackground
-import com.ml.fueltrackerqr.ui.components.GradientBrushes
-import com.ml.fueltrackerqr.ui.components.RequestCard
+import com.ml.fueltrackerqr.model.FuelRequest
+import com.ml.fueltrackerqr.model.RequestStatus
 import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
-import com.ml.fueltrackerqr.ui.theme.BackgroundDark
-import com.ml.fueltrackerqr.ui.theme.DarkTeal
-import com.ml.fueltrackerqr.ui.theme.MediumTeal
-import com.ml.fueltrackerqr.ui.theme.LightCoral
-import com.ml.fueltrackerqr.ui.theme.Primary
-import com.ml.fueltrackerqr.ui.theme.TextPrimary
+import com.ml.fueltrackerqr.viewmodel.AuthViewModel
+import com.ml.fueltrackerqr.viewmodel.DriverViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
- * Screen for displaying a driver's fuel requests
+ * Screen for displaying driver's fuel requests
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DriverRequestsScreen(
     onBackClick: () -> Unit,
-    onCreateRequestClick: () -> Unit,
-    onRequestClick: (FuelRequest) -> Unit
+    onNewRequestClick: () -> Unit,
+    onRequestClick: (String) -> Unit,
+    onHistoryClick: () -> Unit,
+    driverViewModel: DriverViewModel,
+    authViewModel: AuthViewModel
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val driverRequests by driverViewModel.driverRequests.collectAsState()
+
+    var searchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
-    var requests by remember { mutableStateOf<List<FuelRequest>>(emptyList()) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // In a real app, this would fetch the requests from a ViewModel
-    // For now, we'll just use some sample data
-    val sampleRequests = remember {
-        listOf(
-            FuelRequest(
-                id = "1",
-                userId = "user1",
-                driverName = "John Doe",
-                vehicleInfo = "Toyota Corolla - ABC123",
-                fuelAmount = 20.0,
-                destination = "City Center",
-                purpose = "Business meeting",
-                status = RequestStatus.PENDING,
-                timestamp = System.currentTimeMillis() - 86400000, // 1 day ago
-                approvedBy = null,
-                approvedAt = null,
-                declinedBy = null,
-                declinedAt = null,
-                declineReason = null,
-                dispensedAt = null,
-                dispensedBy = null
-            ),
-            FuelRequest(
-                id = "2",
-                userId = "user1",
-                driverName = "John Doe",
-                vehicleInfo = "Toyota Corolla - ABC123",
-                fuelAmount = 15.0,
-                destination = "Airport",
-                purpose = "Pick up client",
-                status = RequestStatus.APPROVED,
-                timestamp = System.currentTimeMillis() - 172800000, // 2 days ago
-                approvedBy = "Admin User",
-                approvedAt = System.currentTimeMillis() - 86400000, // 1 day ago
-                declinedBy = null,
-                declinedAt = null,
-                declineReason = null,
-                dispensedAt = null,
-                dispensedBy = null
-            ),
-            FuelRequest(
-                id = "3",
-                userId = "user1",
-                driverName = "John Doe",
-                vehicleInfo = "Toyota Corolla - ABC123",
-                fuelAmount = 10.0,
-                destination = "Shopping Mall",
-                purpose = "Delivery",
-                status = RequestStatus.DECLINED,
-                timestamp = System.currentTimeMillis() - 259200000, // 3 days ago
-                approvedBy = null,
-                approvedAt = null,
-                declinedBy = "Admin User",
-                declinedAt = System.currentTimeMillis() - 172800000, // 2 days ago
-                declineReason = "Insufficient information",
-                dispensedAt = null,
-                dispensedBy = null
-            ),
-            FuelRequest(
-                id = "4",
-                userId = "user1",
-                driverName = "John Doe",
-                vehicleInfo = "Toyota Corolla - ABC123",
-                fuelAmount = 25.0,
-                destination = "Conference Center",
-                purpose = "Team meeting",
-                status = RequestStatus.DISPENSED,
-                timestamp = System.currentTimeMillis() - 345600000, // 4 days ago
-                approvedBy = "Admin User",
-                approvedAt = System.currentTimeMillis() - 259200000, // 3 days ago
-                declinedBy = null,
-                declinedAt = null,
-                declineReason = null,
-                dispensedAt = System.currentTimeMillis() - 172800000, // 2 days ago
-                dispensedBy = "Gas Station Attendant"
-            )
-        )
+    // Filter requests based on search query and only show pending and approved
+    val filteredRequests = remember(driverRequests, searchQuery) {
+        val activeRequests = driverRequests.filter {
+            it.status == RequestStatus.PENDING || it.status == RequestStatus.APPROVED
+        }
+
+        if (searchQuery.isBlank()) {
+            activeRequests
+        } else {
+            activeRequests.filter { request ->
+                request.id.contains(searchQuery, ignoreCase = true) ||
+                request.tripDetails.contains(searchQuery, ignoreCase = true) ||
+                request.status.name.contains(searchQuery, ignoreCase = true)
+            }
+        }
     }
 
-    // Simulate loading
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        // In a real app, this would be a call to a ViewModel method
-        kotlinx.coroutines.delay(1000)
-        requests = sampleRequests
-        isLoading = false
+    // Load driver requests when the screen is first displayed
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            driverViewModel.loadDriverRequests(user.id)
+            isLoading = false
+        }
     }
+
 
     Scaffold(
         topBar = {
@@ -189,17 +132,10 @@ fun DriverRequestsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Implement search */ }) {
+                    IconButton(onClick = onHistoryClick) {
                         Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = { /* TODO: Implement filtering */ }) {
-                        Icon(
-                            imageVector = Icons.Default.List, // Using List icon for filtering
-                            contentDescription = "Filter",
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "History",
                             tint = Color.White
                         )
                     }
@@ -212,11 +148,9 @@ fun DriverRequestsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreateRequestClick,
-                containerColor = Color(0xFFF57C73),
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(8.dp),
-                shape = CircleShape
+                onClick = onNewRequestClick,
+                containerColor = Color(0xFF00897B),
+                contentColor = Color.White
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -231,129 +165,233 @@ fun DriverRequestsScreen(
         SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Search bar
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    onSearch = { searchQuery = it },
+                    active = searchActive,
+                    onActiveChange = { searchActive = it },
+                    placeholder = { Text("Search requests...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    // Search suggestions could go here
+                }
+
                 if (isLoading) {
-                    // Enhanced loading indicator with background
+                    // Show loading indicator
                     Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1F2937).copy(alpha = 0.7f))
-                            .align(Alignment.Center),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color = Color(0xFFF57C73),
-                            strokeWidth = 3.dp,
-                            modifier = Modifier.size(48.dp)
+                            color = Color(0xFF00897B) // Medium teal
                         )
                     }
-                } else if (requests.isEmpty()) {
-                    // Enhanced empty state with card and icon
+                } else if (filteredRequests.isEmpty()) {
+                    // Show empty state
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .shadow(8.dp, RoundedCornerShape(24.dp)),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF1F2937).copy(alpha = 0.8f)
-                            )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(16.dp)
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // Empty state icon with gradient background
-                                Box(
-                                    modifier = Modifier
-                                        .size(80.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(DarkTeal, LightCoral)
-                                            )
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Add Request",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(40.dp)
-                                    )
-                                }
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(64.dp)
+                            )
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                                Text(
-                                    text = "No Requests Found",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center
-                                )
+                            Text(
+                                text = if (searchQuery.isNotEmpty())
+                                    "No requests found matching '$searchQuery'"
+                                else
+                                    "No active requests found",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                                Text(
-                                    text = "Tap the + button to create a new fuel request",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
+                            Text(
+                                text = "Create a new request by clicking the + button",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 } else {
-                    // Enhanced request list with padding
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp)
+                    // Show list of requests
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Section title with accent
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .width(4.dp)
-                                    .height(24.dp)
-                                    .background(Color(0xFFF57C73), RoundedCornerShape(4.dp))
+                        items(filteredRequests) { request ->
+                            RequestCard(
+                                request = request,
+                                onClick = { onRequestClick(request.id) }
                             )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Text(
-                                text = "Your Fuel Requests",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
-
-                        // Request list
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(vertical = 8.dp)
-                        ) {
-                            items(requests) { request ->
-                                RequestCard(
-                                    request = request,
-                                    onClick = { onRequestClick(request) }
-                                )
-                            }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Card component for displaying a fuel request
+ */
+@Composable
+fun RequestCard(
+    request: FuelRequest,
+    onClick: () -> Unit
+) {
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val formattedDate = dateFormat.format(Date(request.requestDate))
+
+    val statusColor = when (request.status) {
+        RequestStatus.PENDING -> Color(0xFFFFA000) // Amber
+        RequestStatus.APPROVED -> Color(0xFF4CAF50) // Green
+        RequestStatus.DECLINED -> Color(0xFFF44336) // Red
+        RequestStatus.DISPENSED -> Color(0xFF2196F3) // Blue
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Header with request ID and status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Request ID
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color(0xFF4DB6AC), Color(0xFFF57C73))
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "#${request.id.takeLast(4).uppercase()}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = "Request ${request.id.takeLast(8)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF004D40)
+                        )
+
+                        Text(
+                            text = formattedDate,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF004D40).copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                // Status indicator
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(statusColor.copy(alpha = 0.2f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = request.status.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Request details
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Amount
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Amount",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF004D40).copy(alpha = 0.7f)
+                    )
+
+                    Text(
+                        text = "${request.requestedAmount} L",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF004D40)
+                    )
+                }
+
+                // Trip details preview
+                Column(
+                    modifier = Modifier.weight(2f)
+                ) {
+                    Text(
+                        text = "Trip Details",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF004D40).copy(alpha = 0.7f)
+                    )
+
+                    Text(
+                        text = request.tripDetails,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF004D40),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }

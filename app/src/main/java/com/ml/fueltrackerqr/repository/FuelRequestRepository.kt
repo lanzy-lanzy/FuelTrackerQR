@@ -156,6 +156,41 @@ class FuelRequestRepository {
     }
 
     /**
+     * Cancel a fuel request
+     *
+     * @param requestId ID of the request to cancel
+     * @return Result containing the updated FuelRequest or an exception
+     */
+    suspend fun cancelFuelRequest(requestId: String): Result<FuelRequest> {
+        return try {
+            val requestDoc = requestsCollection.document(requestId).get().await()
+            if (!requestDoc.exists()) {
+                return Result.failure(Exception("Request not found"))
+            }
+
+            val request = requestDoc.toObject(FuelRequest::class.java)
+                ?: return Result.failure(Exception("Failed to parse request data"))
+
+            if (request.status != RequestStatus.PENDING) {
+                return Result.failure(Exception("Only pending requests can be cancelled"))
+            }
+
+            // Update the request status to DECLINED
+            val updatedRequest = request.copy(
+                status = RequestStatus.DECLINED,
+                approvalDate = Date().time,
+                notes = request.notes + "\n[Cancelled by driver]"
+            )
+
+            requestsCollection.document(requestId).set(updatedRequest).await()
+            Result.success(updatedRequest)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cancelling fuel request", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Get all fuel requests
      *
      * @return Flow emitting a list of all fuel requests

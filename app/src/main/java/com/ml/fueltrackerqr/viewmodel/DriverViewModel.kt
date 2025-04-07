@@ -257,6 +257,54 @@ class DriverViewModel : ViewModel() {
     }
 
     /**
+     * Cancel a fuel request
+     *
+     * @param requestId ID of the request to cancel
+     */
+    fun cancelFuelRequest(requestId: String) {
+        viewModelScope.launch {
+            _requestState.value = RequestState.Loading
+
+            try {
+                // Find the request in the current list
+                val request = _driverRequests.value.find { it.id == requestId }
+
+                if (request == null) {
+                    _requestState.value = RequestState.Error("Request not found")
+                    return@launch
+                }
+
+                if (request.status != RequestStatus.PENDING) {
+                    _requestState.value = RequestState.Error("Only pending requests can be cancelled")
+                    return@launch
+                }
+
+                // Call repository to cancel the request
+                val result = fuelRequestRepository.cancelFuelRequest(requestId)
+
+                if (result.isSuccess) {
+                    // Update the local list
+                    val updatedList = _driverRequests.value.map {
+                        if (it.id == requestId) {
+                            it.copy(status = RequestStatus.DECLINED)
+                        } else {
+                            it
+                        }
+                    }
+                    _driverRequests.value = updatedList
+
+                    _requestState.value = RequestState.Success("Request cancelled successfully")
+                } else {
+                    _requestState.value = RequestState.Error(result.exceptionOrNull()?.message ?: "Failed to cancel request")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error cancelling fuel request", e)
+                _requestState.value = RequestState.Error(e.message ?: "An error occurred while cancelling the request")
+            }
+        }
+    }
+
+    /**
      * Clear the request state
      */
     fun clearRequestState() {

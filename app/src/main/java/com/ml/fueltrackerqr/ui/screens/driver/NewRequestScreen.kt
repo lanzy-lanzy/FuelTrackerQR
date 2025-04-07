@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -124,7 +125,18 @@ fun NewRequestScreen(
     var notes by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var odometer by remember { mutableStateOf("") }
+    var fuelType by remember { mutableStateOf("") }
+    var purpose by remember { mutableStateOf("") }
     var isVehicleDropdownExpanded by remember { mutableStateOf(false) }
+    var isFuelTypeDropdownExpanded by remember { mutableStateOf(false) }
+    var isPurposeDropdownExpanded by remember { mutableStateOf(false) }
+
+    // Image upload state
+    var hasAttachment by remember { mutableStateOf(false) }
+
+    // Location state
+    var hasSelectedLocation by remember { mutableStateOf(false) }
+    var locationName by remember { mutableStateOf("") }
 
     // Date picker state
     val datePickerState = rememberDatePickerState()
@@ -464,6 +476,66 @@ fun NewRequestScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Fuel type dropdown
+                    val fuelTypes = listOf("Petrol", "Diesel", "Electric", "Hybrid", "CNG", "LPG")
+
+                    ExposedDropdownMenuBox(
+                        expanded = isFuelTypeDropdownExpanded,
+                        onExpandedChange = { isFuelTypeDropdownExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = fuelType,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Fuel Type") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = Color(0xFF00695C) // Darker teal
+                                )
+                            },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isFuelTypeDropdownExpanded)
+                            },
+                            isError = showErrors && fuelType.isBlank(),
+                            supportingText = {
+                                if (showErrors && fuelType.isBlank()) {
+                                    Text("Please select a fuel type")
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF00897B),
+                                unfocusedBorderColor = Color(0xFF80CBC4),
+                                focusedLabelColor = Color(0xFF00897B),
+                                unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                                cursorColor = Color(0xFF00897B)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = isFuelTypeDropdownExpanded,
+                            onDismissRequest = { isFuelTypeDropdownExpanded = false }
+                        ) {
+                            fuelTypes.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        fuelType = option
+                                        isFuelTypeDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     // Trip date field with enhanced styling
                     OutlinedTextField(
                         value = formattedDate,
@@ -575,6 +647,66 @@ fun NewRequestScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Purpose dropdown
+                    val purposes = listOf("Business", "Personal", "Delivery", "Client Meeting", "Site Visit", "Emergency", "Other")
+
+                    ExposedDropdownMenuBox(
+                        expanded = isPurposeDropdownExpanded,
+                        onExpandedChange = { isPurposeDropdownExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = purpose,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Trip Purpose") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = Color(0xFF00695C) // Darker teal
+                                )
+                            },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isPurposeDropdownExpanded)
+                            },
+                            isError = showErrors && purpose.isBlank(),
+                            supportingText = {
+                                if (showErrors && purpose.isBlank()) {
+                                    Text("Please select a trip purpose")
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF00897B),
+                                unfocusedBorderColor = Color(0xFF80CBC4),
+                                focusedLabelColor = Color(0xFF00897B),
+                                unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                                cursorColor = Color(0xFF00897B)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = isPurposeDropdownExpanded,
+                            onDismissRequest = { isPurposeDropdownExpanded = false }
+                        ) {
+                            purposes.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        purpose = option
+                                        isPurposeDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     // Notes field with enhanced styling
                     OutlinedTextField(
                         value = notes,
@@ -599,12 +731,77 @@ fun NewRequestScreen(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Location selection
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(
+                                width = 1.dp,
+                                color = if (showErrors && !hasSelectedLocation) Color.Red else Color(0xFF80CBC4),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable {
+                                // In a real app, this would open a map or location picker
+                                // For now, we'll just simulate selecting a location
+                                hasSelectedLocation = true
+                                locationName = "Selected Gas Station, Main Street"
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (hasSelectedLocation) Color(0xFFE0F2F1) else Color.White
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = if (hasSelectedLocation) Color(0xFF00897B) else Color(0xFF00695C).copy(alpha = 0.7f)
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (hasSelectedLocation) locationName else "Select Gas Station Location",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (hasSelectedLocation) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (hasSelectedLocation) Color(0xFF00897B) else Color(0xFF00695C).copy(alpha = 0.7f)
+                                )
+
+                                if (showErrors && !hasSelectedLocation) {
+                                    Text(
+                                        text = "Please select a location",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Red
+                                    )
+                                } else if (hasSelectedLocation) {
+                                    Text(
+                                        text = "Tap to change",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF00897B).copy(alpha = 0.7f)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Tap to select on map",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF00695C).copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Enhanced error summary with better styling
-                AnimatedVisibility(visible = showErrors && hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate)) {
+                AnimatedVisibility(visible = showErrors && hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate, fuelType, purpose, hasSelectedLocation)) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -659,13 +856,19 @@ fun NewRequestScreen(
                 Button(
                     onClick = {
                         showErrors = true
-                        if (!hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate)) {
+                        if (!hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate, fuelType, purpose, hasSelectedLocation)) {
                             currentUser?.let { user ->
-                                // Combine all details into trip details
+                                // Combine all details into a comprehensive trip details
                                 val fullTripDetails = buildString {
                                     append("Destination: $destination\n")
                                     append("Trip Date: $formattedDate\n")
-                                    append("Odometer Reading: $odometer km\n\n")
+                                    append("Odometer Reading: $odometer km\n")
+                                    append("Fuel Type: $fuelType\n")
+                                    append("Purpose: $purpose\n")
+                                    if (locationName.isNotBlank()) {
+                                        append("Location: $locationName\n")
+                                    }
+                                    append("\nDetails:\n")
                                     append(tripDetails)
                                 }
 
@@ -839,7 +1042,10 @@ private fun hasValidationErrors(
     tripDetails: String,
     destination: String,
     odometer: String,
-    selectedDate: Long?
+    selectedDate: Long?,
+    fuelType: String,
+    purpose: String,
+    hasSelectedLocation: Boolean
 ): Boolean {
     return selectedVehicle == null ||
             requestedAmount.isBlank() ||
@@ -848,7 +1054,10 @@ private fun hasValidationErrors(
             tripDetails.isBlank() ||
             destination.isBlank() ||
             odometer.isBlank() ||
-            selectedDate == null
+            selectedDate == null ||
+            fuelType.isBlank() ||
+            purpose.isBlank() ||
+            !hasSelectedLocation
 }
 
 /**
@@ -857,16 +1066,34 @@ private fun hasValidationErrors(
  * @param selectedVehicle Selected vehicle
  * @param requestedAmount Requested amount of fuel
  * @param tripDetails Trip details
+ * @param destination Destination for the trip
+ * @param odometer Current odometer reading
+ * @param selectedDate Selected trip date
+ * @param fuelType Type of fuel
+ * @param purpose Purpose of the trip
+ * @param hasSelectedLocation Whether a location has been selected
  * @return True if inputs are valid, false otherwise
  */
 private fun validateInputs(
     selectedVehicle: Vehicle?,
     requestedAmount: String,
-    tripDetails: String
+    tripDetails: String,
+    destination: String,
+    odometer: String,
+    selectedDate: Long?,
+    fuelType: String,
+    purpose: String,
+    hasSelectedLocation: Boolean
 ): Boolean {
     return selectedVehicle != null &&
             requestedAmount.isNotBlank() &&
             requestedAmount.toDoubleOrNull() != null &&
             requestedAmount.toDouble() > 0 &&
-            tripDetails.isNotBlank()
+            tripDetails.isNotBlank() &&
+            destination.isNotBlank() &&
+            odometer.isNotBlank() &&
+            selectedDate != null &&
+            fuelType.isNotBlank() &&
+            purpose.isNotBlank() &&
+            hasSelectedLocation
 }
