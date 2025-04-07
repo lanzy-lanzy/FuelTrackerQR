@@ -10,12 +10,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ml.fueltrackerqr.model.UserRole
 import com.ml.fueltrackerqr.ui.screens.admin.AdminDashboardScreen
+import com.ml.fueltrackerqr.ui.screens.admin.AdminRequestsScreen
 import com.ml.fueltrackerqr.ui.screens.admin.RequestDetailScreen
+import com.ml.fueltrackerqr.ui.screens.admin.RequestType
 import com.ml.fueltrackerqr.ui.screens.admin.VehicleManagementScreen
 import com.ml.fueltrackerqr.ui.screens.auth.LoginScreen
 import com.ml.fueltrackerqr.ui.screens.auth.RegisterScreen
-import com.ml.fueltrackerqr.ui.screens.driver.DriverDashboardScreen
-import com.ml.fueltrackerqr.ui.screens.driver.NewRequestScreen
+import com.ml.fueltrackerqr.ui.screens.driver.DriverMainScreen
 import com.ml.fueltrackerqr.ui.screens.gasstation.GasStationDashboardScreen
 import com.ml.fueltrackerqr.ui.screens.gasstation.ScanQRCodeScreen
 import com.ml.fueltrackerqr.viewmodel.AdminViewModel
@@ -136,10 +137,7 @@ fun AppNavigation(
 
         // Driver screens
         composable(AppScreen.DriverDashboard.name) {
-            DriverDashboardScreen(
-                onNewRequestClick = {
-                    navController.navigate(AppScreen.NewRequest.name)
-                },
+            DriverMainScreen(
                 onLogoutClick = {
                     authViewModel.logout()
                     navController.navigate(AppScreen.Login.name) {
@@ -151,37 +149,21 @@ fun AppNavigation(
             )
         }
 
-        composable(AppScreen.NewRequest.name) {
-            NewRequestScreen(
-                onRequestSubmitted = {
-                    navController.popBackStack()
-                },
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                driverViewModel = driverViewModel,
-                authViewModel = authViewModel
-            )
-        }
-
         // Admin screens
         composable(AppScreen.AdminDashboard.name) {
             AdminDashboardScreen(
                 onPendingRequestsClick = {
-                    // For testing purposes, navigate to RequestDetail
-                    navController.navigate(AppScreen.RequestDetail.name)
+                    navController.navigate(AppScreen.PendingRequests.name)
                 },
                 onApprovedRequestsClick = {
-                    // For testing purposes, navigate to RequestDetail
-                    navController.navigate(AppScreen.RequestDetail.name)
+                    navController.navigate(AppScreen.ApprovedRequests.name)
                 },
                 onGenerateQRClick = {
                     // For testing purposes, navigate to RequestDetail
                     navController.navigate(AppScreen.RequestDetail.name)
                 },
                 onHistoryClick = {
-                    // For testing purposes, navigate to RequestDetail
-                    navController.navigate(AppScreen.RequestDetail.name)
+                    navController.navigate(AppScreen.RequestHistory.name)
                 },
                 onVehicleManagementClick = {
                     navController.navigate(AppScreen.VehicleManagement.name)
@@ -203,6 +185,48 @@ fun AppNavigation(
                 },
                 adminViewModel = adminViewModel,
                 authViewModel = authViewModel
+            )
+        }
+
+        composable(AppScreen.PendingRequests.name) {
+            AdminRequestsScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onRequestClick = { request ->
+                    adminViewModel.selectRequest(request)
+                    navController.navigate(AppScreen.RequestDetail.name)
+                },
+                adminViewModel = adminViewModel,
+                requestType = RequestType.PENDING
+            )
+        }
+
+        composable(AppScreen.ApprovedRequests.name) {
+            AdminRequestsScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onRequestClick = { request ->
+                    adminViewModel.selectRequest(request)
+                    navController.navigate(AppScreen.RequestDetail.name)
+                },
+                adminViewModel = adminViewModel,
+                requestType = RequestType.APPROVED
+            )
+        }
+
+        composable(AppScreen.RequestHistory.name) {
+            AdminRequestsScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onRequestClick = { request ->
+                    adminViewModel.selectRequest(request)
+                    navController.navigate(AppScreen.RequestDetail.name)
+                },
+                adminViewModel = adminViewModel,
+                requestType = RequestType.ALL
             )
         }
 

@@ -50,13 +50,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
 import com.ml.fueltrackerqr.model.FuelRequest
 import com.ml.fueltrackerqr.model.RequestStatus
 import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
+import com.ml.fueltrackerqr.ui.components.StylizedQRCode
+import com.ml.fueltrackerqr.util.QRCodeUtil
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
 import com.ml.fueltrackerqr.viewmodel.RequestState
@@ -457,7 +461,7 @@ fun DriverRequestDetailScreen(
                                 .fillMaxWidth()
                                 .padding(bottom = 16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
+                                containerColor = Color.White
                             ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
@@ -467,50 +471,71 @@ fun DriverRequestDetailScreen(
                                     .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = Color(0xFF4CAF50),
-                                    modifier = Modifier.size(48.dp)
+                                Text(
+                                    text = "QR Code for Fuel Dispensing",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF004D40),
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+
+                                HorizontalDivider(
+                                    color = Color(0xFFE0F2F1),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(bottom = 16.dp)
+                                )
+
+                                // QR Code
+                                Box(
+                                    modifier = Modifier
+                                        .size(250.dp)
+                                        .background(
+                                            color = Color.White,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // Use the QR code data from the request if available, otherwise use a simple format
+                                    val qrContent = if (!request.qrCodeData.isNullOrBlank()) {
+                                        request.qrCodeData
+                                    } else {
+                                        "fuel_request:${request.id}"
+                                    }
+
+                                    val qrCodeBitmap = QRCodeUtil.generateQRCode(
+                                        content = qrContent,
+                                        width = 500,
+                                        height = 500
+                                    )
+
+                                    // Log the QR code content for debugging
+                                    android.util.Log.d("DriverRequestDetailScreen", "Generated QR code with content: $qrContent")
+
+                                    Image(
+                                        bitmap = qrCodeBitmap.asImageBitmap(),
+                                        contentDescription = "QR Code",
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text(
+                                    text = "Scan this QR code at the gas station to dispense fuel",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF004D40),
+                                    textAlign = TextAlign.Center
                                 )
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Text(
-                                    text = "QR Code Available",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4CAF50)
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = "Show this QR code to the gas station attendant to dispense fuel",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                                    text = "This QR code is valid for 7 days from approval",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF00796B),
                                     textAlign = TextAlign.Center
                                 )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Button(
-                                    onClick = { /* TODO: Show QR code */ },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF4CAF50)
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    Text("Show QR Code")
-                                }
                             }
                         }
                     }

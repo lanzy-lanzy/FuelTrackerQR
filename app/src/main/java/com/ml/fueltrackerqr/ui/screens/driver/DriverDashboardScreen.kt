@@ -19,11 +19,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExitToApp
-
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +38,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -43,6 +47,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -61,6 +68,7 @@ import com.ml.fueltrackerqr.ui.theme.Primary
 import com.ml.fueltrackerqr.ui.theme.TextPrimary
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
+import com.ml.fueltrackerqr.viewmodel.RequestState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,10 +92,41 @@ fun DriverDashboardScreen(
     val currentUser by authViewModel.currentUser.collectAsState()
     val driverRequests by driverViewModel.driverRequests.collectAsState()
 
+    val requestState by driverViewModel.requestState.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Function to refresh data
+    fun refreshData() {
+        currentUser?.let { user ->
+            isRefreshing = true
+            driverViewModel.loadDriverRequests(user.id)
+            driverViewModel.loadDriverVehicles(user.id)
+        }
+    }
+
+    // Initial data loading
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             driverViewModel.loadDriverRequests(user.id)
             driverViewModel.loadDriverVehicles(user.id)
+        }
+    }
+
+    // Handle request state changes
+    LaunchedEffect(requestState) {
+        when (requestState) {
+            is RequestState.Error -> {
+                snackbarHostState.showSnackbar((requestState as RequestState.Error).message)
+                isRefreshing = false
+            }
+            is RequestState.Success -> {
+                isRefreshing = false
+            }
+            is RequestState.Initial -> {
+                isRefreshing = false
+            }
+            else -> {}
         }
     }
 
@@ -102,9 +141,19 @@ fun DriverDashboardScreen(
                     )
                 },
                 actions = {
+                    // Refresh button
+                    IconButton(onClick = { refreshData() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = Color.White
+                        )
+                    }
+
+                    // Logout button
                     IconButton(onClick = onLogoutClick) {
                         Icon(
-                            imageVector = Icons.Default.ExitToApp,
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Logout",
                             tint = Color.White
                         )
@@ -137,32 +186,44 @@ fun DriverDashboardScreen(
                 contentColor = Color.White,
                 elevation = FloatingActionButtonDefaults.elevation(8.dp)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
             if (currentUser == null) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF00897B)
                 )
             } else {
+                // Show loading indicator if refreshing
+                if (isRefreshing || requestState is RequestState.Loading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .background(Color(0xFF00897B))
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    // Welcome card with gradient background
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(8.dp, RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Transparent
-                        ),
-                        elevation = CardDefaults.cardElevation(0.dp)
-                    ) {
+                        // Welcome card with gradient background
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(8.dp, RoundedCornerShape(16.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.Transparent
+                            ),
+                            elevation = CardDefaults.cardElevation(0.dp)
+                        ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -215,6 +276,50 @@ fun DriverDashboardScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Stats card showing request counts
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(4.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF1F2937).copy(alpha = 0.7f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // Pending count
+                            val pendingCount = driverRequests.count { it.status == RequestStatus.PENDING }
+                            StatItem(
+                                count = pendingCount,
+                                label = "Pending",
+                                color = Color(0xFFFCD34D)
+                            )
+
+                            // Approved count
+                            val approvedCount = driverRequests.count { it.status == RequestStatus.APPROVED }
+                            StatItem(
+                                count = approvedCount,
+                                label = "Approved",
+                                color = Color(0xFF4DB6AC)
+                            )
+
+                            // Dispensed count
+                            val dispensedCount = driverRequests.count { it.status == RequestStatus.DISPENSED }
+                            StatItem(
+                                count = dispensedCount,
+                                label = "Dispensed",
+                                color = Color(0xFF60A5FA)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     // Section title with accent
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -239,7 +344,17 @@ fun DriverDashboardScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (driverRequests.isEmpty()) {
+                    if (requestState is RequestState.Loading && driverRequests.isEmpty()) {
+                        // Loading state
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF00897B))
+                        }
+                    } else if (driverRequests.isEmpty()) {
                         // Enhanced empty state with card and icon
                         Card(
                             modifier = Modifier
@@ -297,12 +412,15 @@ fun DriverDashboardScreen(
                             }
                         }
                     } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(driverRequests) { request ->
-                                FuelRequestCard(request = request)
+                        // List of requests
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                contentPadding = PaddingValues(vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(driverRequests) { request ->
+                                    FuelRequestCard(request = request)
+                                }
                             }
                         }
                     }
@@ -593,6 +711,46 @@ fun RequestStatusChip(status: RequestStatus) {
 }
 
 /**
+ * Composable for displaying a statistic item in the dashboard
+ *
+ * @param count The count to display
+ * @param label The label for the statistic
+ * @param color The accent color for the statistic
+ */
+@Composable
+private fun StatItem(count: Int, label: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        // Count with circular background
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Label
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.8f)
+        )
+    }
+}
+
+/**
  * Format a timestamp as a date string
  *
  * @param timestamp Timestamp to format
@@ -603,3 +761,4 @@ private fun formatDate(timestamp: Long): String {
     val format = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     return format.format(date)
 }
+

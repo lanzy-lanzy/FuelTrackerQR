@@ -29,8 +29,8 @@ if "%DIRNAME%" == "" set DIRNAME=.
 set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%
 
-@rem Set JAVA_HOME to our extracted JDK
-set JAVA_HOME=C:\Users\dttsi\AndroidStudioProjects\FuelTrackerQR\jdk17\jdk-17.0.2
+@rem Use system JAVA_HOME
+@rem set JAVA_HOME=
 
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi

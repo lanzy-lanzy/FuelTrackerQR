@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import android.util.Log
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,7 @@ import java.util.Locale
 
 /**
  * Screen for viewing and managing a fuel request
- * 
+ *
  * @param onBackClick Callback when back button is clicked
  * @param adminViewModel ViewModel for admin operations
  * @param authViewModel ViewModel for authentication
@@ -84,12 +85,14 @@ fun RequestDetailScreen(
     val selectedRequest by adminViewModel.selectedRequest.collectAsState()
     val adminActionState by adminViewModel.adminActionState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     var showApproveDialog by remember { mutableStateOf(false) }
     var showDeclineDialog by remember { mutableStateOf(false) }
+    var showEditTripDialog by remember { mutableStateOf(false) }
     var approvedAmount by remember { mutableStateOf("") }
     var declineReason by remember { mutableStateOf("") }
-    
+    var editedTripDetails by remember { mutableStateOf("") }
+
     LaunchedEffect(adminActionState) {
         when (adminActionState) {
             is AdminActionState.Success -> {
@@ -103,16 +106,19 @@ fun RequestDetailScreen(
             else -> {}
         }
     }
-    
-    // Initialize approved amount with requested amount when request is loaded
+
+    // Initialize approved amount and trip details when request is loaded
     LaunchedEffect(selectedRequest) {
         selectedRequest?.let {
             if (approvedAmount.isEmpty()) {
                 approvedAmount = it.requestedAmount.toString()
             }
+            if (editedTripDetails.isEmpty()) {
+                editedTripDetails = it.tripDetails
+            }
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -140,7 +146,7 @@ fun RequestDetailScreen(
                 )
             } else {
                 val request = selectedRequest!!
-                
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -163,70 +169,87 @@ fun RequestDetailScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
-                                
+
                                 RequestStatusChip(status = request.status)
                             }
-                            
+
                             Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            
+
                             DetailRow(label = "Driver", value = request.driverName)
                             DetailRow(label = "Vehicle ID", value = request.vehicleId)
                             DetailRow(label = "Requested Amount", value = "${request.requestedAmount} liters")
-                            
+
                             if (request.status == RequestStatus.DISPENSED) {
                                 DetailRow(label = "Dispensed Amount", value = "${request.dispensedAmount} liters")
                             }
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Text(
-                                text = "Trip Details",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Trip Details",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+
+                                if (request.status == RequestStatus.PENDING) {
+                                    TextButton(
+                                        onClick = {
+                                            editedTripDetails = request.tripDetails
+                                            showEditTripDialog = true
+                                        }
+                                    ) {
+                                        Text("Edit")
+                                    }
+                                }
+                            }
+
                             Text(
                                 text = request.tripDetails,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
-                            
+
                             if (request.notes.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 Text(
                                     text = "Notes",
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                
+
                                 Text(
                                     text = request.notes,
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             Text(
                                 text = "Request Date: ${formatDate(request.requestDate)}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            
-                            if (request.status == RequestStatus.APPROVED || 
-                                request.status == RequestStatus.DECLINED || 
+
+                            if (request.status == RequestStatus.APPROVED ||
+                                request.status == RequestStatus.DECLINED ||
                                 request.status == RequestStatus.DISPENSED
                             ) {
                                 Text(
                                     text = "Approval Date: ${formatDate(request.approvalDate)}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
-                                
+
                                 Text(
                                     text = "Approved By: ${request.approvedByName}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
-                            
+
                             if (request.status == RequestStatus.DISPENSED) {
                                 Text(
                                     text = "Dispensed Date: ${formatDate(request.dispensedDate)}",
@@ -235,9 +258,9 @@ fun RequestDetailScreen(
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     // Action buttons for pending requests
                     if (request.status == RequestStatus.PENDING) {
                         Row(
@@ -258,9 +281,9 @@ fun RequestDetailScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Approve")
                             }
-                            
+
                             Spacer(modifier = Modifier.width(16.dp))
-                            
+
                             Button(
                                 onClick = { showDeclineDialog = true },
                                 modifier = Modifier.weight(1f),
@@ -277,11 +300,11 @@ fun RequestDetailScreen(
                             }
                         }
                     }
-                    
+
                     // QR Code for approved requests
                     if (request.status == RequestStatus.APPROVED) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         Card(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -296,9 +319,9 @@ fun RequestDetailScreen(
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(16.dp))
-                                
+
                                 Box(
                                     modifier = Modifier
                                         .size(250.dp)
@@ -309,21 +332,31 @@ fun RequestDetailScreen(
                                         .padding(16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
+                                    // Use the QR code data from the request if available, otherwise use a simple format
+                                    val qrContent = if (request.qrCodeData.isNotBlank()) {
+                                        request.qrCodeData
+                                    } else {
+                                        "fuel_request:${request.id}"
+                                    }
+
                                     val qrCodeBitmap = QRCodeUtil.generateQRCode(
-                                        content = request.qrCodeData,
+                                        content = qrContent,
                                         width = 500,
                                         height = 500
                                     )
-                                    
+
+                                    // Log the QR code content for debugging
+                                    Log.d("RequestDetailScreen", "Generated QR code with content: $qrContent")
+
                                     Image(
                                         bitmap = qrCodeBitmap.asImageBitmap(),
                                         contentDescription = "QR Code",
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(16.dp))
-                                
+
                                 Text(
                                     text = "Scan this QR code at the gas station to dispense fuel",
                                     style = MaterialTheme.typography.bodyMedium
@@ -333,7 +366,7 @@ fun RequestDetailScreen(
                     }
                 }
             }
-            
+
             if (adminActionState is AdminActionState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
@@ -341,7 +374,7 @@ fun RequestDetailScreen(
             }
         }
     }
-    
+
     // Approve dialog
     if (showApproveDialog) {
         AlertDialog(
@@ -350,9 +383,9 @@ fun RequestDetailScreen(
             text = {
                 Column {
                     Text("Enter the amount of fuel to approve:")
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     OutlinedTextField(
                         value = approvedAmount,
                         onValueChange = { approvedAmount = it },
@@ -389,7 +422,7 @@ fun RequestDetailScreen(
             }
         )
     }
-    
+
     // Decline dialog
     if (showDeclineDialog) {
         AlertDialog(
@@ -398,9 +431,9 @@ fun RequestDetailScreen(
             text = {
                 Column {
                     Text("Please provide a reason for declining:")
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     OutlinedTextField(
                         value = declineReason,
                         onValueChange = { declineReason = it },
@@ -440,11 +473,59 @@ fun RequestDetailScreen(
             }
         )
     }
+
+    // Edit Trip Details dialog
+    if (showEditTripDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditTripDialog = false },
+            title = { Text("Edit Trip Details") },
+            text = {
+                Column {
+                    Text("Update the trip details for this request:")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = editedTripDetails,
+                        onValueChange = { editedTripDetails = it },
+                        label = { Text("Trip Details") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 4
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (editedTripDetails.isNotBlank()) {
+                            currentUser?.let { admin ->
+                                selectedRequest?.let { request ->
+                                    // Update the request with new trip details
+                                    adminViewModel.updateTripDetails(
+                                        requestId = request.id,
+                                        tripDetails = editedTripDetails
+                                    )
+                                }
+                            }
+                            showEditTripDialog = false
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditTripDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 /**
  * Row displaying a label and value
- * 
+ *
  * @param label Label text
  * @param value Value text
  */
@@ -460,7 +541,7 @@ fun DetailRow(label: String, value: String) {
             text = "$label:",
             style = MaterialTheme.typography.bodyMedium
         )
-        
+
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
@@ -471,7 +552,7 @@ fun DetailRow(label: String, value: String) {
 
 /**
  * Format a timestamp as a date string
- * 
+ *
  * @param timestamp Timestamp to format
  * @return Formatted date string
  */

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,11 +57,13 @@ import androidx.compose.ui.unit.dp
 
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import com.ml.fueltrackerqr.model.FuelRequest
 import com.ml.fueltrackerqr.model.RequestStatus
 import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
+import com.ml.fueltrackerqr.viewmodel.RequestState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -86,13 +89,26 @@ fun DriverRequestsScreen(
     var isLoading by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Log all requests for debugging
+    LaunchedEffect(driverRequests) {
+        Log.d("DriverRequestsScreen", "Total requests in driverRequests: ${driverRequests.size}")
+        driverRequests.forEachIndexed { index, request ->
+            Log.d("DriverRequestsScreen", "Request $index - ID: ${request.id}, Status: ${request.status}, DriverId: ${request.driverId}")
+        }
+    }
+
     // Filter requests based on search query and only show pending and approved
     val filteredRequests = remember(driverRequests, searchQuery) {
-        val activeRequests = driverRequests.filter {
-            it.status == RequestStatus.PENDING || it.status == RequestStatus.APPROVED
-        }
+        // Log before filtering
+        Log.d("DriverRequestsScreen", "Filtering ${driverRequests.size} requests")
 
-        if (searchQuery.isBlank()) {
+        // Don't filter by status for now to see all requests
+        val activeRequests = driverRequests
+
+        // Log after status filtering
+        Log.d("DriverRequestsScreen", "After status filtering: ${activeRequests.size} requests")
+
+        val result = if (searchQuery.isBlank()) {
             activeRequests
         } else {
             activeRequests.filter { request ->
@@ -101,13 +117,65 @@ fun DriverRequestsScreen(
                 request.status.name.contains(searchQuery, ignoreCase = true)
             }
         }
+
+        // Log final result
+        Log.d("DriverRequestsScreen", "Final filtered requests: ${result.size}")
+        result
+    }
+
+    // State for request state
+    val requestState by driverViewModel.requestState.collectAsState()
+
+    // Function to refresh data
+    fun refreshData() {
+        isLoading = true
+        currentUser?.let { user ->
+            driverViewModel.loadDriverRequests(user.id)
+        }
     }
 
     // Load driver requests when the screen is first displayed
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
+            Log.d("DriverRequestsScreen", "Loading requests for user: ${user.id}")
             driverViewModel.loadDriverRequests(user.id)
-            isLoading = false
+        } ?: run {
+            Log.e("DriverRequestsScreen", "Current user is null, cannot load requests")
+            snackbarHostState.showSnackbar("Please log in to view your requests")
+        }
+    }
+
+    // State for warning message
+    var warningMessage by remember { mutableStateOf("") }
+
+    // Handle request state changes
+    LaunchedEffect(requestState) {
+        when (requestState) {
+            is RequestState.Loading -> {
+                isLoading = true
+                warningMessage = ""
+            }
+            is RequestState.Success -> {
+                isLoading = false
+                warningMessage = ""
+                val message = (requestState as RequestState.Success).message
+                snackbarHostState.showSnackbar(message)
+            }
+            is RequestState.Initial -> {
+                isLoading = false
+                warningMessage = ""
+            }
+            is RequestState.Warning -> {
+                isLoading = false
+                val message = (requestState as RequestState.Warning).message
+                warningMessage = message
+            }
+            is RequestState.Error -> {
+                isLoading = false
+                warningMessage = ""
+                val message = (requestState as RequestState.Error).message
+                snackbarHostState.showSnackbar(message)
+            }
         }
     }
 
@@ -132,6 +200,16 @@ fun DriverRequestsScreen(
                     }
                 },
                 actions = {
+                    // Refresh button
+                    IconButton(onClick = { refreshData() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = Color.White
+                        )
+                    }
+
+                    // History button
                     IconButton(onClick = onHistoryClick) {
                         Icon(
                             imageVector = Icons.Default.Info,
@@ -168,6 +246,35 @@ fun DriverRequestsScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
+                // Warning banner for connectivity issues
+                if (warningMessage.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFA000).copy(alpha = 0.2f))
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFFFFA000),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = warningMessage,
+                                color = Color(0xFFFFA000),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
                 // Search bar
                 SearchBar(
                     query = searchQuery,
@@ -195,9 +302,19 @@ fun DriverRequestsScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF00897B) // Medium teal
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF00897B) // Medium teal
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Loading requests...",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 } else if (filteredRequests.isEmpty()) {
                     // Show empty state

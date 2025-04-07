@@ -112,22 +112,100 @@ class FuelRequestRepository {
                 return@flow
             }
 
-            // Query Firestore for requests
-            val snapshot = requestsCollection
+            // First emit an empty list to indicate loading has started
+            emit(emptyList())
+
+            // Log the collection path we're querying
+            Log.d(TAG, "Querying collection: ${FirebaseConfig.FUEL_REQUESTS_COLLECTION} for driver: $driverId")
+            Log.d(TAG, "Using field: ${FirebaseConfig.FIELD_REQUEST_DRIVER_ID} for query")
+
+            // Just do a simple fetch to avoid crashes - without ordering to avoid index requirement
+            val query = requestsCollection
                 .whereEqualTo(FirebaseConfig.FIELD_REQUEST_DRIVER_ID, driverId)
-                .orderBy(FirebaseConfig.FIELD_REQUEST_DATE, Query.Direction.DESCENDING)
-                .get()
-                .await()
+                // Removed orderBy to avoid requiring a composite index
+
+            Log.d(TAG, "Executing query: $query")
+
+            val snapshot = query.get().await()
+
+            Log.d(TAG, "Query completed. Documents found: ${snapshot.documents.size}")
+
+            // Log each document for debugging
+            snapshot.documents.forEachIndexed { index, doc ->
+                Log.d(TAG, "Document $index - ID: ${doc.id}")
+                Log.d(TAG, "Document $index - Data: ${doc.data}")
+            }
 
             // Process the results
             val requests = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(FuelRequest::class.java)
+                try {
+                    // Manual conversion to ensure proper enum handling
+                    val data = doc.data
+                    if (data != null) {
+                        val id = doc.id
+                        val driverId = data[FirebaseConfig.FIELD_REQUEST_DRIVER_ID] as? String ?: ""
+                        val driverName = data[FirebaseConfig.FIELD_REQUEST_DRIVER_NAME] as? String ?: ""
+                        val vehicleId = data[FirebaseConfig.FIELD_REQUEST_VEHICLE_ID] as? String ?: ""
+                        val requestedAmount = (data[FirebaseConfig.FIELD_REQUEST_AMOUNT] as? Number)?.toDouble() ?: 0.0
+                        val dispensedAmount = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED] as? Number)?.toDouble() ?: 0.0
+
+                        // Handle status enum conversion carefully
+                        val statusStr = data[FirebaseConfig.FIELD_REQUEST_STATUS] as? String ?: "PENDING"
+                        val status = try {
+                            RequestStatus.valueOf(statusStr)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing status: $statusStr", e)
+                            RequestStatus.PENDING
+                        }
+
+                        val requestDate = (data[FirebaseConfig.FIELD_REQUEST_DATE] as? Number)?.toLong() ?: 0L
+                        val approvalDate = (data[FirebaseConfig.FIELD_REQUEST_APPROVAL_DATE] as? Number)?.toLong() ?: 0L
+                        val dispensedDate = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED_DATE] as? Number)?.toLong() ?: 0L
+                        val approvedById = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_ID] as? String ?: ""
+                        val approvedByName = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_NAME] as? String ?: ""
+                        val tripDetails = data[FirebaseConfig.FIELD_REQUEST_TRIP_DETAILS] as? String ?: ""
+                        val notes = data[FirebaseConfig.FIELD_REQUEST_NOTES] as? String ?: ""
+                        val qrCodeData = data[FirebaseConfig.FIELD_REQUEST_QR_CODE] as? String ?: ""
+
+                        val request = FuelRequest(
+                            id = id,
+                            driverId = driverId,
+                            driverName = driverName,
+                            vehicleId = vehicleId,
+                            requestedAmount = requestedAmount,
+                            dispensedAmount = dispensedAmount,
+                            status = status,
+                            requestDate = requestDate,
+                            approvalDate = approvalDate,
+                            dispensedDate = dispensedDate,
+                            approvedById = approvedById,
+                            approvedByName = approvedByName,
+                            tripDetails = tripDetails,
+                            notes = notes,
+                            qrCodeData = qrCodeData
+                        )
+
+                        Log.d(TAG, "Successfully parsed document ${doc.id} to FuelRequest: $request")
+                        request
+                    } else {
+                        Log.e(TAG, "Document ${doc.id} has null data")
+                        null
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing document ${doc.id} to FuelRequest", e)
+                    null
+                }
             }
 
-            Log.d(TAG, "Found ${requests.size} requests for driver: $driverId")
-            emit(requests)
+            // Sort the requests by requestDate in descending order (newest first)
+            val sortedRequests = requests.sortedByDescending { it.requestDate }
+
+            Log.d(TAG, "Found ${sortedRequests.size} valid requests for driver: $driverId")
+            emit(sortedRequests)
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching requests for driver: $driverId", e)
+            Log.e(TAG, "Exception details: ${e.message}")
+            e.printStackTrace()
             emit(emptyList())
         }
     }
@@ -140,17 +218,95 @@ class FuelRequestRepository {
      */
     fun getRequestsByStatus(status: RequestStatus): Flow<List<FuelRequest>> = flow {
         try {
+            Log.d(TAG, "Fetching requests with status: ${status.name}")
+
             val snapshot = requestsCollection
                 .whereEqualTo(FirebaseConfig.FIELD_REQUEST_STATUS, status.name)
                 .orderBy(FirebaseConfig.FIELD_REQUEST_DATE, Query.Direction.DESCENDING)
                 .get()
                 .await()
 
-            val requests = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(FuelRequest::class.java)
+            Log.d(TAG, "Query completed. Documents found: ${snapshot.documents.size}")
+
+            // Log each document for debugging
+            snapshot.documents.forEachIndexed { index, doc ->
+                Log.d(TAG, "Document $index - ID: ${doc.id}")
+                Log.d(TAG, "Document $index - Data: ${doc.data}")
             }
+
+            // Process the results with manual conversion
+            val requests = snapshot.documents.mapNotNull { doc ->
+                try {
+                    // Manual conversion to ensure proper enum handling
+                    val data = doc.data
+                    if (data != null) {
+                        val id = doc.id
+                        val driverId = data[FirebaseConfig.FIELD_REQUEST_DRIVER_ID] as? String ?: ""
+                        val driverName = data[FirebaseConfig.FIELD_REQUEST_DRIVER_NAME] as? String ?: ""
+                        val vehicleId = data[FirebaseConfig.FIELD_REQUEST_VEHICLE_ID] as? String ?: ""
+                        val requestedAmount = (data[FirebaseConfig.FIELD_REQUEST_AMOUNT] as? Number)?.toDouble() ?: 0.0
+                        val dispensedAmount = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED] as? Number)?.toDouble() ?: 0.0
+
+                        // Handle status enum conversion carefully
+                        val statusStr = data[FirebaseConfig.FIELD_REQUEST_STATUS] as? String ?: "PENDING"
+                        val docStatus = try {
+                            RequestStatus.valueOf(statusStr)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing status: $statusStr", e)
+                            RequestStatus.PENDING
+                        }
+
+                        // Only include documents that match the requested status
+                        if (docStatus != status) {
+                            Log.d(TAG, "Skipping document ${doc.id} with status $docStatus (looking for $status)")
+                            return@mapNotNull null
+                        }
+
+                        val requestDate = (data[FirebaseConfig.FIELD_REQUEST_DATE] as? Number)?.toLong() ?: 0L
+                        val approvalDate = (data[FirebaseConfig.FIELD_REQUEST_APPROVAL_DATE] as? Number)?.toLong() ?: 0L
+                        val dispensedDate = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED_DATE] as? Number)?.toLong() ?: 0L
+                        val approvedById = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_ID] as? String ?: ""
+                        val approvedByName = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_NAME] as? String ?: ""
+                        val tripDetails = data[FirebaseConfig.FIELD_REQUEST_TRIP_DETAILS] as? String ?: ""
+                        val notes = data[FirebaseConfig.FIELD_REQUEST_NOTES] as? String ?: ""
+                        val qrCodeData = data[FirebaseConfig.FIELD_REQUEST_QR_CODE] as? String ?: ""
+
+                        val request = FuelRequest(
+                            id = id,
+                            driverId = driverId,
+                            driverName = driverName,
+                            vehicleId = vehicleId,
+                            requestedAmount = requestedAmount,
+                            dispensedAmount = dispensedAmount,
+                            status = docStatus,
+                            requestDate = requestDate,
+                            approvalDate = approvalDate,
+                            dispensedDate = dispensedDate,
+                            approvedById = approvedById,
+                            approvedByName = approvedByName,
+                            tripDetails = tripDetails,
+                            notes = notes,
+                            qrCodeData = qrCodeData
+                        )
+
+                        Log.d(TAG, "Successfully parsed document ${doc.id} to FuelRequest: $request")
+                        request
+                    } else {
+                        Log.e(TAG, "Document ${doc.id} has null data")
+                        null
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing document ${doc.id} to FuelRequest", e)
+                    null
+                }
+            }
+
+            Log.d(TAG, "Found ${requests.size} valid requests with status: ${status.name}")
             emit(requests)
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching requests with status: ${status.name}", e)
+            Log.e(TAG, "Exception details: ${e.message}")
+            e.printStackTrace()
             emit(emptyList())
         }
     }
@@ -197,16 +353,88 @@ class FuelRequestRepository {
      */
     fun getAllRequests(): Flow<List<FuelRequest>> = flow {
         try {
+            Log.d(TAG, "Fetching all requests")
+
             val snapshot = requestsCollection
                 .orderBy(FirebaseConfig.FIELD_REQUEST_DATE, Query.Direction.DESCENDING)
                 .get()
                 .await()
 
-            val requests = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(FuelRequest::class.java)
+            Log.d(TAG, "Query completed. Documents found: ${snapshot.documents.size}")
+
+            // Log each document for debugging
+            snapshot.documents.forEachIndexed { index, doc ->
+                Log.d(TAG, "Document $index - ID: ${doc.id}")
+                Log.d(TAG, "Document $index - Data: ${doc.data}")
             }
+
+            // Process the results with manual conversion
+            val requests = snapshot.documents.mapNotNull { doc ->
+                try {
+                    // Manual conversion to ensure proper enum handling
+                    val data = doc.data
+                    if (data != null) {
+                        val id = doc.id
+                        val driverId = data[FirebaseConfig.FIELD_REQUEST_DRIVER_ID] as? String ?: ""
+                        val driverName = data[FirebaseConfig.FIELD_REQUEST_DRIVER_NAME] as? String ?: ""
+                        val vehicleId = data[FirebaseConfig.FIELD_REQUEST_VEHICLE_ID] as? String ?: ""
+                        val requestedAmount = (data[FirebaseConfig.FIELD_REQUEST_AMOUNT] as? Number)?.toDouble() ?: 0.0
+                        val dispensedAmount = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED] as? Number)?.toDouble() ?: 0.0
+
+                        // Handle status enum conversion carefully
+                        val statusStr = data[FirebaseConfig.FIELD_REQUEST_STATUS] as? String ?: "PENDING"
+                        val status = try {
+                            RequestStatus.valueOf(statusStr)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing status: $statusStr", e)
+                            RequestStatus.PENDING
+                        }
+
+                        val requestDate = (data[FirebaseConfig.FIELD_REQUEST_DATE] as? Number)?.toLong() ?: 0L
+                        val approvalDate = (data[FirebaseConfig.FIELD_REQUEST_APPROVAL_DATE] as? Number)?.toLong() ?: 0L
+                        val dispensedDate = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED_DATE] as? Number)?.toLong() ?: 0L
+                        val approvedById = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_ID] as? String ?: ""
+                        val approvedByName = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_NAME] as? String ?: ""
+                        val tripDetails = data[FirebaseConfig.FIELD_REQUEST_TRIP_DETAILS] as? String ?: ""
+                        val notes = data[FirebaseConfig.FIELD_REQUEST_NOTES] as? String ?: ""
+                        val qrCodeData = data[FirebaseConfig.FIELD_REQUEST_QR_CODE] as? String ?: ""
+
+                        val request = FuelRequest(
+                            id = id,
+                            driverId = driverId,
+                            driverName = driverName,
+                            vehicleId = vehicleId,
+                            requestedAmount = requestedAmount,
+                            dispensedAmount = dispensedAmount,
+                            status = status,
+                            requestDate = requestDate,
+                            approvalDate = approvalDate,
+                            dispensedDate = dispensedDate,
+                            approvedById = approvedById,
+                            approvedByName = approvedByName,
+                            tripDetails = tripDetails,
+                            notes = notes,
+                            qrCodeData = qrCodeData
+                        )
+
+                        Log.d(TAG, "Successfully parsed document ${doc.id} to FuelRequest: $request")
+                        request
+                    } else {
+                        Log.e(TAG, "Document ${doc.id} has null data")
+                        null
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing document ${doc.id} to FuelRequest", e)
+                    null
+                }
+            }
+
+            Log.d(TAG, "Found ${requests.size} valid requests")
             emit(requests)
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching all requests", e)
+            Log.e(TAG, "Exception details: ${e.message}")
+            e.printStackTrace()
             emit(emptyList())
         }
     }
@@ -230,24 +458,20 @@ class FuelRequestRepository {
                 return Result.failure(Exception("Request not found"))
             }
 
-            val request = requestDoc.toObject(FuelRequest::class.java)
-                ?: return Result.failure(Exception("Failed to parse request data"))
+            // Get the request using our manual parsing method
+            val request = getRequestById(requestId).getOrElse { e ->
+                return Result.failure(e)
+            }
 
             if (request.status != RequestStatus.PENDING) {
                 return Result.failure(Exception("Request is not in PENDING status"))
             }
 
-            // Create QR code data
-            val qrCodeData = QRCodeData(
-                requestId = requestId,
-                driverId = request.driverId,
-                vehicleId = request.vehicleId,
-                approvedAmount = approvedAmount,
-                approvalDate = Date().time,
-                signature = generateSignature(requestId, request.driverId)
-            )
+            // Create a simple QR code string instead of complex JSON
+            val qrCodeContent = "fuel_request:$requestId"
 
-            val qrCodeJson = Json.encodeToString(qrCodeData)
+            // Log the QR code content for debugging
+            Log.d(TAG, "Generated simple QR code for request: $requestId, content: $qrCodeContent")
 
             // Update the request
             val updatedRequest = request.copy(
@@ -255,7 +479,7 @@ class FuelRequestRepository {
                 approvalDate = Date().time,
                 approvedById = admin.id,
                 approvedByName = admin.name,
-                qrCodeData = qrCodeJson
+                qrCodeData = qrCodeContent
             )
 
             requestsCollection.document(requestId).set(updatedRequest).await()
@@ -284,8 +508,10 @@ class FuelRequestRepository {
                 return Result.failure(Exception("Request not found"))
             }
 
-            val request = requestDoc.toObject(FuelRequest::class.java)
-                ?: return Result.failure(Exception("Failed to parse request data"))
+            // Get the request using our manual parsing method
+            val request = getRequestById(requestId).getOrElse { e ->
+                return Result.failure(e)
+            }
 
             if (request.status != RequestStatus.PENDING) {
                 return Result.failure(Exception("Request is not in PENDING status"))
@@ -324,8 +550,10 @@ class FuelRequestRepository {
                 return Result.failure(Exception("Request not found"))
             }
 
-            val request = requestDoc.toObject(FuelRequest::class.java)
-                ?: return Result.failure(Exception("Failed to parse request data"))
+            // Get the request using our manual parsing method
+            val request = getRequestById(requestId).getOrElse { e ->
+                return Result.failure(e)
+            }
 
             if (request.status != RequestStatus.APPROVED) {
                 return Result.failure(Exception("Request is not in APPROVED status"))
@@ -353,15 +581,68 @@ class FuelRequestRepository {
      */
     suspend fun getRequestById(requestId: String): Result<FuelRequest> {
         return try {
+            Log.d(TAG, "Fetching request by ID: $requestId")
+
             val requestDoc = requestsCollection.document(requestId).get().await()
-            if (requestDoc.exists()) {
-                val request = requestDoc.toObject(FuelRequest::class.java)
-                    ?: throw Exception("Failed to parse request data")
+            if (!requestDoc.exists()) {
+                Log.e(TAG, "Request not found: $requestId")
+                return Result.failure(Exception("Request not found"))
+            }
+
+            // Manual conversion to ensure proper enum handling
+            val data = requestDoc.data
+            if (data != null) {
+                val id = requestDoc.id
+                val driverId = data[FirebaseConfig.FIELD_REQUEST_DRIVER_ID] as? String ?: ""
+                val driverName = data[FirebaseConfig.FIELD_REQUEST_DRIVER_NAME] as? String ?: ""
+                val vehicleId = data[FirebaseConfig.FIELD_REQUEST_VEHICLE_ID] as? String ?: ""
+                val requestedAmount = (data[FirebaseConfig.FIELD_REQUEST_AMOUNT] as? Number)?.toDouble() ?: 0.0
+                val dispensedAmount = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED] as? Number)?.toDouble() ?: 0.0
+
+                // Handle status enum conversion carefully
+                val statusStr = data[FirebaseConfig.FIELD_REQUEST_STATUS] as? String ?: "PENDING"
+                val status = try {
+                    RequestStatus.valueOf(statusStr)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing status: $statusStr", e)
+                    RequestStatus.PENDING
+                }
+
+                val requestDate = (data[FirebaseConfig.FIELD_REQUEST_DATE] as? Number)?.toLong() ?: 0L
+                val approvalDate = (data[FirebaseConfig.FIELD_REQUEST_APPROVAL_DATE] as? Number)?.toLong() ?: 0L
+                val dispensedDate = (data[FirebaseConfig.FIELD_REQUEST_DISPENSED_DATE] as? Number)?.toLong() ?: 0L
+                val approvedById = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_ID] as? String ?: ""
+                val approvedByName = data[FirebaseConfig.FIELD_REQUEST_APPROVED_BY_NAME] as? String ?: ""
+                val tripDetails = data[FirebaseConfig.FIELD_REQUEST_TRIP_DETAILS] as? String ?: ""
+                val notes = data[FirebaseConfig.FIELD_REQUEST_NOTES] as? String ?: ""
+                val qrCodeData = data[FirebaseConfig.FIELD_REQUEST_QR_CODE] as? String ?: ""
+
+                val request = FuelRequest(
+                    id = id,
+                    driverId = driverId,
+                    driverName = driverName,
+                    vehicleId = vehicleId,
+                    requestedAmount = requestedAmount,
+                    dispensedAmount = dispensedAmount,
+                    status = status,
+                    requestDate = requestDate,
+                    approvalDate = approvalDate,
+                    dispensedDate = dispensedDate,
+                    approvedById = approvedById,
+                    approvedByName = approvedByName,
+                    tripDetails = tripDetails,
+                    notes = notes,
+                    qrCodeData = qrCodeData
+                )
+
+                Log.d(TAG, "Successfully parsed request: $request")
                 Result.success(request)
             } else {
-                Result.failure(Exception("Request not found"))
+                Log.e(TAG, "Document $requestId has null data")
+                Result.failure(Exception("Failed to parse request data"))
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching request by ID: $requestId", e)
             Result.failure(e)
         }
     }
@@ -374,30 +655,78 @@ class FuelRequestRepository {
      */
     suspend fun validateQRCode(qrCodeContent: String): Result<FuelRequest> {
         return try {
-            val qrCodeData = Json.decodeFromString<QRCodeData>(qrCodeContent)
+            Log.d(TAG, "Validating QR code: $qrCodeContent")
 
-            // Validate signature
-            val expectedSignature = generateSignature(qrCodeData.requestId, qrCodeData.driverId)
-            if (qrCodeData.signature != expectedSignature) {
-                return Result.failure(Exception("Invalid QR code signature"))
+            // Only support the simple format "fuel_request:{requestId}"
+            if (!qrCodeContent.startsWith("fuel_request:")) {
+                Log.e(TAG, "Invalid QR code format: $qrCodeContent")
+                return Result.failure(Exception("Invalid QR code format. Expected 'fuel_request:{requestId}'."))
             }
 
-            // Check if expired
-            if (qrCodeData.expiryDate < Date().time) {
-                return Result.failure(Exception("QR code has expired"))
+            val requestId = qrCodeContent.substringAfter("fuel_request:")
+            Log.d(TAG, "Extracted request ID from QR code: $requestId")
+
+            if (requestId.isBlank()) {
+                Log.e(TAG, "Empty request ID in QR code")
+                return Result.failure(Exception("Invalid QR code: missing request ID"))
             }
 
             // Get the request
-            val request = getRequestById(qrCodeData.requestId).getOrElse {
-                return Result.failure(Exception("Request not found"))
+            val request = getRequestById(requestId).getOrElse {
+                Log.e(TAG, "Request not found: $requestId")
+                return Result.failure(Exception("Request not found. Please check with an administrator."))
             }
+
+            Log.d(TAG, "Found request: $request")
 
             // Check if already dispensed
             if (request.status == RequestStatus.DISPENSED) {
-                return Result.failure(Exception("Fuel has already been dispensed for this request"))
+                Log.w(TAG, "Fuel already dispensed for request: $requestId")
+                return Result.failure(Exception("Fuel has already been dispensed for this request."))
             }
 
+            // Check if request is approved
+            if (request.status != RequestStatus.APPROVED) {
+                Log.w(TAG, "Request is not approved: $requestId, status: ${request.status}")
+                return Result.failure(Exception("This request is not approved for fuel dispensing."))
+            }
+
+            Log.d(TAG, "QR code validation successful for request: $requestId")
             Result.success(request)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error validating QR code", e)
+            Result.failure(Exception("Error processing QR code: ${e.message ?: "Unknown error"}"))
+        }
+    }
+
+    /**
+     * Update trip details for a fuel request
+     *
+     * @param requestId ID of the request to update
+     * @param tripDetails New trip details
+     * @return Result containing the updated FuelRequest or an exception
+     */
+    suspend fun updateTripDetails(requestId: String, tripDetails: String): Result<FuelRequest> {
+        return try {
+            val requestDoc = requestsCollection.document(requestId).get().await()
+            if (!requestDoc.exists()) {
+                return Result.failure(Exception("Request not found"))
+            }
+
+            val request = requestDoc.toObject(FuelRequest::class.java)
+                ?: return Result.failure(Exception("Failed to parse request data"))
+
+            if (request.status != RequestStatus.PENDING) {
+                return Result.failure(Exception("Only pending requests can be updated"))
+            }
+
+            // Update the request
+            val updatedRequest = request.copy(
+                tripDetails = tripDetails
+            )
+
+            requestsCollection.document(requestId).set(updatedRequest).await()
+            Result.success(updatedRequest)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -411,7 +740,8 @@ class FuelRequestRepository {
      * @return Signature string
      */
     private fun generateSignature(requestId: String, driverId: String): String {
-        // In a real app, this would use a more secure method
-        return "$requestId:$driverId:${Date().time}".hashCode().toString()
+        // Use a consistent value for the signature to ensure it's the same each time
+        // In a real app, this would use a more secure method like HMAC
+        return "$requestId:$driverId".hashCode().toString()
     }
 }
