@@ -131,7 +131,7 @@ fun LoginScreen(
                         enter = fadeIn(tween(1000)) + slideInVertically(tween(1000)) { -50 }
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_app_logo),
+                            painter = painterResource(id = R.drawable.ic_fuel_pump),
                             contentDescription = "App Logo",
                             modifier = Modifier
                                 .size(140.dp)
