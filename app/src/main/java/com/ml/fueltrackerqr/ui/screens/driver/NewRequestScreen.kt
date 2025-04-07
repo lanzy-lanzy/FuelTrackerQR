@@ -6,9 +6,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,30 +19,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -58,15 +70,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateDpAsState
 import com.ml.fueltrackerqr.model.Vehicle
 import com.ml.fueltrackerqr.ui.components.TealCoralGradientBackground
 import com.ml.fueltrackerqr.ui.components.PrimaryButton
+import com.ml.fueltrackerqr.ui.components.SplashGradientBackground
+import com.ml.fueltrackerqr.ui.theme.DarkTeal
+import com.ml.fueltrackerqr.ui.theme.MediumTeal
+import com.ml.fueltrackerqr.ui.theme.LightCoral
+import com.ml.fueltrackerqr.ui.theme.Primary
+import com.ml.fueltrackerqr.ui.theme.TextPrimary
 import com.ml.fueltrackerqr.viewmodel.AuthViewModel
 import com.ml.fueltrackerqr.viewmodel.DriverViewModel
 import com.ml.fueltrackerqr.viewmodel.RequestState
@@ -139,7 +160,7 @@ fun NewRequestScreen(
         }
     }
 
-    // Date picker dialog
+    // Enhanced date picker dialog with better styling
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -148,14 +169,37 @@ fun NewRequestScreen(
                     selectedDate = datePickerState.selectedDateMillis
                     showDatePicker = false
                 }) {
-                    Text("Confirm")
+                    Text(
+                        "Confirm",
+                        color = Color(0xFF00897B),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(
+                        "Cancel",
+                        color = Color(0xFF00897B)
+                    )
                 }
-            }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = Color.White,
+                titleContentColor = Color(0xFF00695C),
+                headlineContentColor = Color(0xFF00695C),
+                weekdayContentColor = Color(0xFF00897B),
+                subheadContentColor = Color(0xFF00897B),
+                yearContentColor = Color(0xFF00897B),
+                currentYearContentColor = Color(0xFFF57C73),
+                selectedYearContentColor = Color.White,
+                selectedYearContainerColor = Color(0xFF00897B),
+                dayContentColor = Color(0xFF00695C),
+                selectedDayContentColor = Color.White,
+                selectedDayContainerColor = Color(0xFF00897B),
+                todayContentColor = Color(0xFFF57C73),
+                todayDateBorderColor = Color(0xFFF57C73)
+            )
         ) {
             DatePicker(state = datePickerState)
         }
@@ -164,25 +208,31 @@ fun NewRequestScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("New Fuel Request") },
+                title = {
+                    Text(
+                        "New Fuel Request",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF00897B), // Medium teal
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = Color(0xFF004D40), // Dark teal
+                    titleContentColor = Color.White
                 )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        TealCoralGradientBackground(
+        SplashGradientBackground(
             modifier = Modifier.padding(padding)
         ) {
             Column(
@@ -193,20 +243,43 @@ fun NewRequestScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                // Header card
+                // Enhanced header card with icon
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                        .padding(bottom = 24.dp)
+                        .shadow(8.dp, RoundedCornerShape(24.dp)),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF004D40).copy(alpha = 0.8f) // Dark teal with transparency
+                        containerColor = Color(0xFF004D40).copy(alpha = 0.9f) // Dark teal with transparency
                     ),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Fuel icon with circle background
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(Color(0xFF4DB6AC), Color(0xFFF57C73))
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Fuel",
+                                tint = Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Text(
                             text = "Create New Fuel Request",
                             style = MaterialTheme.typography.headlineSmall,
@@ -248,7 +321,7 @@ fun NewRequestScreen(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = null,
-                                    tint = Color(0xFF00897B) // Medium teal
+                                    tint = Color(0xFF00695C) // Darker teal
                                 )
                             },
                             isError = showErrors && selectedVehicle == null,
@@ -292,10 +365,13 @@ fun NewRequestScreen(
                     ) {
                         selectedVehicle?.let { vehicle ->
                             Card(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .shadow(2.dp, RoundedCornerShape(12.dp)),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFFFC4BC).copy(alpha = 0.3f) // Light coral with transparency
-                                )
+                                    containerColor = Color(0xFFE0F2F1) // Very light teal
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     DetailRow("Make & Model", "${vehicle.make} ${vehicle.model}")
@@ -310,7 +386,7 @@ fun NewRequestScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Odometer reading
+                    // Odometer reading with enhanced styling
                     OutlinedTextField(
                         value = odometer,
                         onValueChange = { odometer = it },
@@ -321,7 +397,7 @@ fun NewRequestScreen(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
                         },
                         isError = showErrors && odometer.isBlank(),
@@ -329,7 +405,15 @@ fun NewRequestScreen(
                             if (showErrors && odometer.isBlank()) {
                                 Text("Please enter current odometer reading")
                             }
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
                 }
 
@@ -340,7 +424,7 @@ fun NewRequestScreen(
                     title = "Fuel Request Details",
                     icon = Icons.Default.Info
                 ) {
-                    // Requested amount field
+                    // Requested amount field with enhanced styling
                     OutlinedTextField(
                         value = requestedAmount,
                         onValueChange = { requestedAmount = it },
@@ -351,7 +435,7 @@ fun NewRequestScreen(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
                         },
                         isError = showErrors && (requestedAmount.isBlank() || requestedAmount.toDoubleOrNull() == null || requestedAmount.toDoubleOrNull() ?: 0.0 <= 0),
@@ -367,12 +451,20 @@ fun NewRequestScreen(
                                     Text("Tank capacity: ${vehicle.tankCapacity} liters")
                                 }
                             }
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Trip date field
+                    // Trip date field with enhanced styling
                     OutlinedTextField(
                         value = formattedDate,
                         onValueChange = {},
@@ -381,16 +473,17 @@ fun NewRequestScreen(
                         readOnly = true,
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Info,
+                                imageVector = Icons.Default.DateRange,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
                         },
                         trailingIcon = {
                             IconButton(onClick = { showDatePicker = true }) {
                                 Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = "Select Date"
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = "Select Date",
+                                    tint = Color(0xFF00897B) // Medium teal
                                 )
                             }
                         },
@@ -399,7 +492,15 @@ fun NewRequestScreen(
                             if (showErrors && selectedDate == null) {
                                 Text("Please select a trip date")
                             }
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
                 }
 
@@ -410,7 +511,7 @@ fun NewRequestScreen(
                     title = "Trip Information",
                     icon = Icons.Default.LocationOn
                 ) {
-                    // Destination field
+                    // Destination field with enhanced styling
                     OutlinedTextField(
                         value = destination,
                         onValueChange = { destination = it },
@@ -420,7 +521,7 @@ fun NewRequestScreen(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
                         },
                         isError = showErrors && destination.isBlank(),
@@ -428,12 +529,20 @@ fun NewRequestScreen(
                             if (showErrors && destination.isBlank()) {
                                 Text("Please enter destination")
                             }
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Trip details field
+                    // Trip details field with enhanced styling
                     OutlinedTextField(
                         value = tripDetails,
                         onValueChange = { tripDetails = it },
@@ -445,7 +554,7 @@ fun NewRequestScreen(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
                         },
                         isError = showErrors && tripDetails.isBlank(),
@@ -453,12 +562,20 @@ fun NewRequestScreen(
                             if (showErrors && tripDetails.isBlank()) {
                                 Text("Please enter trip details")
                             }
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Notes field
+                    // Notes field with enhanced styling
                     OutlinedTextField(
                         value = notes,
                         onValueChange = { notes = it },
@@ -470,47 +587,76 @@ fun NewRequestScreen(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = null,
-                                tint = Color(0xFF00897B) // Medium teal
+                                tint = Color(0xFF00695C) // Darker teal
                             )
-                        }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00897B),
+                            unfocusedBorderColor = Color(0xFF80CBC4),
+                            focusedLabelColor = Color(0xFF00897B),
+                            unfocusedLabelColor = Color(0xFF00897B).copy(alpha = 0.7f),
+                            cursorColor = Color(0xFF00897B)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Error summary
+                // Enhanced error summary with better styling
                 AnimatedVisibility(visible = showErrors && hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate)) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = 16.dp)
+                            .shadow(4.dp, RoundedCornerShape(16.dp)),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF57C73).copy(alpha = 0.2f) // Dark coral with transparency
-                        )
+                            containerColor = Color(0xFFF57C73).copy(alpha = 0.15f) // Light coral with transparency
+                        ),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Error",
-                                tint = Color(0xFFF57C73), // Dark coral
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
+                            // Error icon with circle background
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF57C73).copy(alpha = 0.2f))
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Error",
+                                    tint = Color(0xFFF57C73), // Dark coral
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
                             Text(
                                 text = "Please fill in all required fields correctly",
                                 color = Color(0xFFF57C73), // Dark coral
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
 
-                // Submit button
-                PrimaryButton(
-                    text = "Submit Fuel Request",
+                // Enhanced submit button with gradient and animation
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val buttonElevation by animateDpAsState(
+                    targetValue = if (isPressed) 2.dp else 8.dp,
+                    label = "Button Elevation"
+                )
+
+                Button(
                     onClick = {
                         showErrors = true
                         if (!hasValidationErrors(selectedVehicle, requestedAmount, tripDetails, destination, odometer, selectedDate)) {
@@ -533,9 +679,45 @@ fun NewRequestScreen(
                             }
                         }
                     },
-                    isLoading = requestState is RequestState.Loading,
-                    enabled = requestState !is RequestState.Loading
-                )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .shadow(buttonElevation, RoundedCornerShape(28.dp)),
+                    enabled = requestState !is RequestState.Loading,
+                    interactionSource = interactionSource,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFFF57C73), Color(0xFF00897B))
+                                ),
+                                shape = RoundedCornerShape(28.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (requestState is RequestState.Loading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Submit Fuel Request",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -544,7 +726,7 @@ fun NewRequestScreen(
 }
 
 /**
- * Section card component for grouping related fields
+ * Enhanced section card component for grouping related fields
  */
 @Composable
 private fun SectionCard(
@@ -555,25 +737,38 @@ private fun SectionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .padding(bottom = 16.dp)
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Section header
+        Column(modifier = Modifier.padding(20.dp)) {
+            // Enhanced section header with accent background
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color(0xFF00897B), // Medium teal
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
+                // Icon with circular background
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE0F2F1))
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color(0xFF00695C), // Darker teal
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
@@ -583,20 +778,10 @@ private fun SectionCard(
             }
 
             // Divider with gradient
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFF004D40), // Dark teal
-                                Color(0xFF00897B), // Medium teal
-                                Color(0xFFF8A097)  // Medium coral
-                            )
-                        )
-                    )
-                    .padding(bottom = 16.dp)
+            HorizontalDivider(
+                modifier = Modifier.padding(bottom = 16.dp),
+                thickness = 2.dp,
+                color = Color(0xFF80CBC4) // Light teal
             )
 
             // Section content
@@ -606,21 +791,36 @@ private fun SectionCard(
 }
 
 /**
- * Detail row component for displaying vehicle information
+ * Enhanced detail row component for displaying vehicle information
  */
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF004D40).copy(alpha = 0.7f) // Dark teal with transparency
-        )
+        // Label with dot indicator
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF80CBC4)) // Light teal
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF004D40).copy(alpha = 0.7f) // Dark teal with transparency
+            )
+        }
+
+        // Value with bold text
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
