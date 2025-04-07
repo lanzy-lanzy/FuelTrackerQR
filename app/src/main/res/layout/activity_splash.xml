@@ -7,20 +7,26 @@
     android:background="@drawable/splash_background"
     tools:context=".SplashActivity">
 
-    <!-- Circular background for the logo -->
+    <!-- Enhanced circular background for the logo with border -->
     <androidx.cardview.widget.CardView
         android:id="@+id/logoBackground"
         android:layout_width="220dp"
         android:layout_height="220dp"
         android:elevation="4dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="#E0F2F1"
         app:cardCornerRadius="110dp"
-        app:cardElevation="8dp"
+        app:cardElevation="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4" />
+        app:layout_constraintVertical_bias="0.4">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/circle_border" />
+    </androidx.cardview.widget.CardView>
 
     <!-- Fuel pump logo -->
     <ImageView
