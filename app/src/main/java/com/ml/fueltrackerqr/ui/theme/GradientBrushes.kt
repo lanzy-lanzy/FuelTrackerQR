@@ -24,5 +24,5 @@ val tealCoralGradient: Brush get() = GradientBrushes.tealCoralGradient
 val purpleBlueGradient: Brush get() = GradientBrushes.purpleBlueGradient
 val orangeRedGradient: Brush get() = GradientBrushes.orangeRedGradient
 val greenBlueGradient: Brush get() = GradientBrushes.greenBlueGradient
-val tealToCoralGradient: Brush get() = GradientBrushes.tealToCoralGradient
-val coralToTealGradient: Brush get() = GradientBrushes.coralToTealGradient
+val tealToLightTealGradient: Brush get() = GradientBrushes.tealToLightTealGradient
+val lightTealToDarkTealGradient: Brush get() = GradientBrushes.lightTealToDarkTealGradient

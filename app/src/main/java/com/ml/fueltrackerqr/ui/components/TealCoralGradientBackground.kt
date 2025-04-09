@@ -17,16 +17,16 @@ fun TealCoralGradientBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
-    // Teal-Coral color palette
+    // Teal color palette
     val darkTeal = Color(0xFF004D40)
     val mediumTeal = Color(0xFF00897B)
-    val lightCoral = Color(0xFFFFC4BC)
-    
-    // Create a vertical gradient from dark teal to light coral
+    val lightTeal = Color(0xFF4DB6AC)
+
+    // Create a vertical gradient using only teal colors
     val gradientBrush = Brush.verticalGradient(
-        colors = listOf(darkTeal, mediumTeal, lightCoral)
+        colors = listOf(darkTeal, mediumTeal, mediumTeal.copy(alpha = 0.95f))
     )
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()

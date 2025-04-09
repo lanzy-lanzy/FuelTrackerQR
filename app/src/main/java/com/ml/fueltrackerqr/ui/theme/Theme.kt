@@ -80,7 +80,15 @@ fun FuelTrackerQRTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = (if (darkTheme) BackgroundDark else Primary).toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            // Set navigation bar color to match the app theme and remove divider
+            window.navigationBarColor = (if (darkTheme) BackgroundDark else Primary).toArgb()
+            // Make sure system bars use our colors
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+            // Make app edge-to-edge
+            WindowCompat.setDecorFitsSystemWindows(window, false)
         }
     }
 

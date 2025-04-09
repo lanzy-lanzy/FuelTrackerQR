@@ -16,7 +16,7 @@ import com.ml.fueltrackerqr.ui.screens.admin.RequestType
 import com.ml.fueltrackerqr.ui.screens.admin.VehicleManagementScreen
 import com.ml.fueltrackerqr.ui.screens.auth.LoginScreen
 import com.ml.fueltrackerqr.ui.screens.auth.RegisterScreen
-import com.ml.fueltrackerqr.ui.screens.driver.DriverMainScreen
+import com.ml.fueltrackerqr.ui.screens.driver.NewDriverMainScreen
 import com.ml.fueltrackerqr.ui.screens.gasstation.GasStationDashboardScreen
 import com.ml.fueltrackerqr.ui.screens.gasstation.ScanQRCodeScreen
 import com.ml.fueltrackerqr.viewmodel.AdminViewModel
@@ -137,7 +137,8 @@ fun AppNavigation(
 
         // Driver screens
         composable(AppScreen.DriverDashboard.name) {
-            DriverMainScreen(
+            // Use the new implementation of DriverMainScreen
+            NewDriverMainScreen(
                 onLogoutClick = {
                     authViewModel.logout()
                     navController.navigate(AppScreen.Login.name) {

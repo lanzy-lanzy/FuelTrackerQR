@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
             // Set up basic UI first to avoid blank screen
             enableEdgeToEdge()
 
+            // Make sure the navigation bar is transparent
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+
             // Always start with Login screen
             val startDestination = AppScreen.Login.name
             Log.d(TAG, "Start destination set to: $startDestination")

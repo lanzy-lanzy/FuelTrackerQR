@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.FuelTrackerQR" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.FuelTrackerQR" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
 
     <style name="Theme.FuelTrackerQR.NoActionBar" parent="Theme.FuelTrackerQR">
         <item name="android:windowActionBar">false</item>

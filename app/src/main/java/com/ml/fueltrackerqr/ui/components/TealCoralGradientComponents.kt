@@ -42,7 +42,7 @@ fun TealCoralGradientDivider(
         colors = listOf(
             androidx.compose.ui.graphics.Color(0xFF004D40), // Dark teal
             androidx.compose.ui.graphics.Color(0xFF00897B), // Medium teal
-            androidx.compose.ui.graphics.Color(0xFFF8A097)  // Medium coral
+            androidx.compose.ui.graphics.Color(0xFF4DB6AC)  // Light teal (replaced coral)
         )
     )
 

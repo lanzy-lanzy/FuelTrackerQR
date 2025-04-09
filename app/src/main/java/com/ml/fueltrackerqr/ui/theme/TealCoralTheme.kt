@@ -29,9 +29,9 @@ private val TealCoralDarkColorScheme = darkColorScheme(
     onPrimary = White,
     primaryContainer = ThemeDarkTeal,
     onPrimaryContainer = White,
-    secondary = ThemeMediumCoral,
-    onSecondary = ThemeDarkTeal,
-    secondaryContainer = ThemeDarkCoral,
+    secondary = ThemeMediumTeal.copy(alpha = 0.8f), // Changed from coral to teal
+    onSecondary = White,
+    secondaryContainer = ThemeDarkTeal.copy(alpha = 0.8f), // Changed from coral to teal
     onSecondaryContainer = White,
     tertiary = ThemeLightTeal,
     onTertiary = ThemeDarkTeal,
@@ -41,7 +41,7 @@ private val TealCoralDarkColorScheme = darkColorScheme(
     onSurface = White,
     surfaceVariant = ThemeLightTeal,
     onSurfaceVariant = ThemeDarkTeal,
-    error = ThemeDarkCoral,
+    error = Color(0xFFCF6679), // Standard Material Design dark theme error color
     onError = White
 )
 
@@ -50,19 +50,19 @@ private val TealCoralLightColorScheme = lightColorScheme(
     onPrimary = White,
     primaryContainer = ThemeLightTeal,
     onPrimaryContainer = ThemeDarkTeal,
-    secondary = ThemeMediumCoral,
+    secondary = ThemeMediumTeal.copy(alpha = 0.8f), // Changed from coral to teal
     onSecondary = ThemeDarkTeal,
-    secondaryContainer = ThemeLightCoral,
+    secondaryContainer = ThemeLightTeal.copy(alpha = 0.9f), // Changed from coral to teal
     onSecondaryContainer = ThemeDarkTeal,
     tertiary = ThemeLightTeal,
     onTertiary = ThemeDarkTeal,
-    background = ThemeLightCoral,
+    background = ThemeLightTeal, // Changed from coral to teal
     onBackground = ThemeDarkTeal,
     surface = White,
     onSurface = ThemeDarkTeal,
     surfaceVariant = ThemeLightTeal,
     onSurfaceVariant = ThemeDarkTeal,
-    error = ThemeDarkCoral,
+    error = Color(0xFFB00020), // Standard Material Design error color
     onError = White
 )
 

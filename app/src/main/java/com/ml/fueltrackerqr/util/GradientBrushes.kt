@@ -20,19 +20,19 @@ object GradientBrushes {
         colors = listOf(MediumTeal, DarkTeal)
     )
 
-    // Secondary gradient (coral)
+    // Secondary gradient (teal variant)
     val secondaryGradient = Brush.linearGradient(
-        colors = listOf(MediumCoral, DarkCoral)
+        colors = listOf(MediumTeal.copy(alpha = 0.8f), DarkTeal.copy(alpha = 0.9f))
     )
 
-    // Teal to coral horizontal gradient
+    // Teal horizontal gradient (renamed from teal-coral)
     val tealCoralHorizontalGradient = Brush.linearGradient(
-        colors = listOf(MediumTeal, MediumCoral)
+        colors = listOf(MediumTeal, LightTeal)
     )
 
     // Status gradients
     val pendingGradient = Brush.linearGradient(
-        colors = listOf(MediumCoral, LightCoral)
+        colors = listOf(Color(0xFFFCD34D), Color(0xFFFFEEBB)) // Yellow gradient for pending
     )
 
     val approvedGradient = Brush.linearGradient(
@@ -40,7 +40,7 @@ object GradientBrushes {
     )
 
     val declinedGradient = Brush.linearGradient(
-        colors = listOf(DarkCoral, MediumCoral)
+        colors = listOf(Color(0xFFEF4444), Color(0xFFFCA5A5)) // Red gradient for declined
     )
 
     val dispensedGradient = Brush.linearGradient(
@@ -53,11 +53,11 @@ object GradientBrushes {
     )
 
     val coralDarkGradient = Brush.linearGradient(
-        colors = listOf(MediumCoral, DarkCoral)
+        colors = listOf(MediumTeal.copy(alpha = 0.7f), DarkTeal) // Renamed but using teal colors
     )
 
     val tealCoralGradient = Brush.linearGradient(
-        colors = listOf(MediumTeal, MediumCoral)
+        colors = listOf(MediumTeal, LightTeal) // Renamed but using only teal colors
     )
 
     // Legacy gradients (keeping for backward compatibility)
@@ -66,28 +66,34 @@ object GradientBrushes {
     )
 
     val orangeRedGradient = Brush.linearGradient(
-        colors = listOf(MediumCoral, DarkCoral)
+        colors = listOf(Color(0xFFF97316), Color(0xFFEF4444)) // Using actual orange and red
     )
 
     val greenBlueGradient = Brush.linearGradient(
         colors = listOf(MediumTeal, LightTeal)
     )
 
-    // Background gradients
+    // Background gradients - pure teal family with no coral/pink
     val backgroundGradient = Brush.verticalGradient(
-        colors = listOf(DarkTeal, MediumTeal, LightCoral)
+        colors = listOf(
+            DarkTeal,                  // Dark teal at top
+            MediumTeal,                // Medium teal in middle
+            MediumTeal.copy(alpha = 0.95f)  // Slightly lighter teal at bottom
+        ),
+        startY = 0f,
+        endY = Float.POSITIVE_INFINITY  // Ensure gradient extends fully
     )
 
     val lightBackgroundGradient = Brush.verticalGradient(
-        colors = listOf(LightCoral, MediumCoral.copy(alpha = 0.7f))
+        colors = listOf(LightTeal, MediumTeal.copy(alpha = 0.8f))
     )
 
-    // Special background gradients
-    val tealToCoralGradient = Brush.verticalGradient(
-        colors = listOf(DarkTeal, MediumCoral)
+    // Special background gradients - all within teal family
+    val tealToLightTealGradient = Brush.verticalGradient(
+        colors = listOf(DarkTeal, LightTeal)
     )
 
-    val coralToTealGradient = Brush.verticalGradient(
-        colors = listOf(DarkCoral, LightTeal)
+    val lightTealToDarkTealGradient = Brush.verticalGradient(
+        colors = listOf(LightTeal, DarkTeal)
     )
 }

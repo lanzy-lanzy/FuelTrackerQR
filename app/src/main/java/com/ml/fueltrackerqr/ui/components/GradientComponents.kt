@@ -58,16 +58,16 @@ object GradientBrushes {
         colors = listOf(Color.White, Color(0xFFF3F4F6))
     )
 
-    // Splash screen gradient (Teal-Coral theme)
-    val splashGradient = Brush.linearGradient(
-        colors = listOf(DarkTeal, MediumTeal, LightCoral),
-        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-        end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
+    // Splash screen gradient (Teal-only theme)
+    val splashGradient = Brush.verticalGradient(
+        colors = listOf(DarkTeal, MediumTeal, MediumTeal.copy(alpha = 0.95f))
     )
 
-    // Vertical version of splash gradient
-    val splashVerticalGradient = Brush.verticalGradient(
-        colors = listOf(DarkTeal, MediumTeal, LightCoral)
+    // Diagonal version of splash gradient
+    val splashDiagonalGradient = Brush.linearGradient(
+        colors = listOf(DarkTeal, MediumTeal, MediumTeal.copy(alpha = 0.95f)),
+        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+        end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
     )
 
     // Status gradients
@@ -96,9 +96,9 @@ object GradientBrushes {
         colors = listOf(AccentGreen, PrimaryLight)
     )
 
-    // Teal-Coral gradients
+    // Teal gradients (renamed from Teal-Coral)
     val tealCoralGradient = Brush.horizontalGradient(
-        colors = listOf(DarkTeal, LightCoral)
+        colors = listOf(DarkTeal, MediumTeal)
     )
 }
 

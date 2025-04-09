@@ -224,24 +224,15 @@ fun DriverRequestsScreen(
                 )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNewRequestClick,
-                containerColor = Color(0xFF00897B),
-                contentColor = Color.White
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Create Request",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
+        // Remove the FAB since we already have a New Request button in the bottom navigation
+        // This eliminates redundancy and potential confusion
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        // Use fillMaxSize to ensure the background covers the entire screen
         SplashGradientBackground(
-            modifier = Modifier.padding(padding)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -275,7 +266,7 @@ fun DriverRequestsScreen(
                         }
                     }
                 }
-                // Search bar
+                // Search bar with improved styling
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
@@ -286,12 +277,14 @@ fun DriverRequestsScreen(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
+                            contentDescription = "Search",
+                            tint = Color(0xFF00695C) // Teal color for icon
                         )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .clip(RoundedCornerShape(28.dp)) // More rounded corners
                 ) {
                     // Search suggestions could go here
                 }
@@ -355,10 +348,10 @@ fun DriverRequestsScreen(
                         }
                     }
                 } else {
-                    // Show list of requests
+                    // Show list of requests with improved spacing
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp) // Increased spacing between cards
                     ) {
                         items(filteredRequests) { request ->
                             RequestCard(
@@ -400,7 +393,7 @@ fun RequestCard(
             containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+            defaultElevation = 2.dp // Reduced elevation for a more subtle shadow
         )
     ) {
         Column(
@@ -414,19 +407,21 @@ fun RequestCard(
             ) {
                 // Request ID
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Improved profile picture placeholder with gradient
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(Color(0xFF4DB6AC), Color(0xFFF57C73))
+                                    colors = listOf(Color(0xFF004D40), Color(0xFF00897B))
                                 )
-                            ),
+                            )
+                            .padding(2.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "#${request.id.takeLast(4).uppercase()}",
+                            text = "#${request.id.takeLast(2).uppercase()}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -451,19 +446,25 @@ fun RequestCard(
                     }
                 }
 
-                // Status indicator
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(statusColor.copy(alpha = 0.2f))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                // Status indicator with improved styling
+                Card(
+                    modifier = Modifier,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = statusColor.copy(alpha = 0.15f)
+                    ),
+                    elevation = CardDefaults.cardElevation(0.dp)
                 ) {
-                    Text(
-                        text = request.status.name,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
+                    Box(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = request.status.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = statusColor
+                        )
+                    }
                 }
             }
 

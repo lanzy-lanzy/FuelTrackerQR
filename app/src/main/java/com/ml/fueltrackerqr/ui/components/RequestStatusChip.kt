@@ -23,7 +23,7 @@ import com.ml.fueltrackerqr.ui.theme.StatusPending
 
 /**
  * Chip displaying the status of a request
- * 
+ *
  * @param status Status of the request
  */
 @Composable
@@ -34,7 +34,7 @@ fun RequestStatusChip(status: RequestStatus) {
         RequestStatus.DECLINED -> Pair(Color(0xFFFFEBEE), Color(0xFFC62828))
         RequestStatus.DISPENSED -> Pair(Color(0xFFE3F2FD), Color(0xFF1565C0))
     }
-    
+
     Box(
         modifier = Modifier
             .padding(4.dp)
@@ -58,9 +58,9 @@ fun RequestStatusChip(status: RequestStatus) {
                     drawCircle(color = textColor)
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(4.dp))
-            
+
             Text(
                 text = status.name,
                 style = MaterialTheme.typography.bodySmall,
